@@ -146,5 +146,24 @@ namespace ManagementSystem.WebApi.Controllers
             }
             return Ok();
         }
+
+        [HttpGet("{userId}/comments")]
+        [ProducesResponseType(typeof(List<UserResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetCommentsByUser([FromQuery] GetUsersRequest request, CancellationToken cancellationToken = default)
+        {
+            var query = new GetUsersQuery();
+            query.UserRequestType = request.UserRequestType;
+
+            var result = await _mediator.Send(query, cancellationToken);
+
+            if (result is null || result.Count == 0)
+            {
+                return NotFound();
+            }
+            var mappedResponse = _mapper.Map<List<UserResponse>>(result);
+            return Ok(mappedResponse);
+        }
+
     }
 }

@@ -1,11 +1,10 @@
-﻿using ManagementSystem.Domain.Models.Args.Department;
+﻿using CommonLibrary.Models.Args;
 using ManagementSystem.Domain.Models.Dto;
-using ManagementSystem.Domain.Models.Enums;
 using MediatR;
 
 namespace ManagementSystem.Application.Features.Queries.Department
 {
-    public class UsersByDepartmentQuery : GetDepartmentArgs, IRequest<UsersByDepartmentDto>
+    public class UsersByDepartmentQuery : GetByIdArgs, IRequest<UsersByDepartmentDto>
     {
     }
 }

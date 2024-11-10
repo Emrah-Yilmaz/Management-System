@@ -111,7 +111,7 @@ namespace ManagementSystem.WebApi.Controllers
             return Ok(mappedResponse);
         }
 
-        [HttpGet("withUsers")]
+        [HttpGet("{departmentId}/users")]
         [ProducesResponseType(typeof(UsesrByDepartmentResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -124,6 +124,24 @@ namespace ManagementSystem.WebApi.Controllers
             }
 
             var mappedResponse = _mapper.Map<UsesrByDepartmentResponse>(result);
+
+            return Ok(mappedResponse);
+        }
+        [HttpGet("{departmentId}/projects")]
+        [ProducesResponseType(typeof(ProjectsByDepartmentResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetProjectsByDepartment([FromRoute] int departmentId, CancellationToken cancellationToken = default)
+        {
+            var query = new GetProjectsByDepartmentQuery();
+            query.Id = departmentId;
+            var result = await _mediator.Send(query);
+            if (result is null)
+            {
+                return NotFound();
+            }
+
+            var mappedResponse = _mapper.Map<ProjectsByDepartmentResponse>(result);
 
             return Ok(mappedResponse);
         }

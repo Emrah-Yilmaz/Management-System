@@ -9,6 +9,7 @@ using ManagementSystem.Domain.Persistence.Comment;
 using ManagementSystem.Domain.Persistence.Department;
 using ManagementSystem.Domain.Persistence.Location;
 using ManagementSystem.Domain.Persistence.User;
+using ManagementSystem.Domain.Persistence.WorkTask;
 using ManagementSystem.Domain.Services.Abstract.User;
 using ManagementSystem.Domain.Utilities;
 using Microsoft.EntityFrameworkCore;
@@ -16,11 +17,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Packages.Exceptions.Types;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Linq.Expressions;
 using System.Security.Claims;
 using System.Text;
-using System.Text.Json;
 
 namespace ManagementSystem.Domain.Services.Concrete.User
 {
@@ -32,8 +30,9 @@ namespace ManagementSystem.Domain.Services.Concrete.User
         private readonly IDepartmentRepository _departmentRepository;
         private readonly IProjectRepository _projectRepository;
         private readonly IAddressRepository _addressRepository;
+        private readonly IWorkTaskRepository _workTaskRepository;
 
-        public UserService(IUserRepository userRepository, IConfiguration configuration, IMapper mapper, IDepartmentRepository departmentRepository, IProjectRepository projectRepository, IAddressRepository addressRepository)
+        public UserService(IUserRepository userRepository, IConfiguration configuration, IMapper mapper, IDepartmentRepository departmentRepository, IProjectRepository projectRepository, IAddressRepository addressRepository, IWorkTaskRepository workTaskRepository)
         {
             _userRepository = userRepository;
             _configuration = configuration;
@@ -41,6 +40,7 @@ namespace ManagementSystem.Domain.Services.Concrete.User
             _departmentRepository = departmentRepository;
             _projectRepository = projectRepository;
             _addressRepository = addressRepository;
+            _workTaskRepository = workTaskRepository;
         }
 
         public async Task<bool> AddUserToDepartment(AddUserToDepartmentArgs args, CancellationToken cancellationToken = default)
@@ -153,7 +153,7 @@ namespace ManagementSystem.Domain.Services.Concrete.User
                         .RuleFor(u => u.UserName, (f, u) => $"{u.Name.ToLower()}.{u.LastName.ToLower()}")
                         .RuleFor(u => u.Email, f => f.Internet.Email())
                         .RuleFor(u => u.Status, StatusType.Published.ToString())
-                        .RuleFor(u => u.PasswordHash, f => f.Internet.Password());
+                        .RuleFor(u => u.PasswordHash, _ => "123456");
 
             var users = faker.Generate(100);
             var saved = await _userRepository.AddRangeAsync(users);
@@ -174,37 +174,39 @@ namespace ManagementSystem.Domain.Services.Concrete.User
                             })
                             .RuleFor(d => d.Projects, f => new List<Project>()); // Projeler boş bir liste
 
-            var departments = departmentFaker.Generate(15);
+            var departments = departmentFaker.Generate(10);
             var savedDepartments = await _departmentRepository.AddRangeAsync(departments);
 
-            
+
             var projectFaker = new Faker<Project>("tr")
                             .RuleFor(p => p.Name, f => f.Commerce.ProductName()) // Rastgele bir proje adı
-                            .RuleFor(p => p.Users, f =>
-                            {
-                                // Kullanıcılardan rastgele 10 kullanıcı seç
-                                var random = new Random();
-                                return Enumerable.Range(0, 10)
-                                                 .Select(_ => users[random.Next(users.Count)]) // Rastgele kullanıcı seç
-                                                 .Distinct() // Tekrar eden kullanıcıları kaldır
-                                                 .ToList();
-                            })
                             .RuleFor(p => p.Departments, f =>
                             {
-                                // Departmanlardan rastgele 2 departman seç
                                 var random = new Random();
                                 return Enumerable.Range(0, 2)
                                                  .Select(_ => departments[random.Next(departments.Count)]) // Rastgele departman seç
                                                  .Distinct() // Tekrar eden departmanları kaldır
                                                  .ToList();
                             })
+                            .RuleFor(p => p.Users, (f, p) =>
+                            {
+                                var random = new Random();
+                                // Projeye ait departmanlardan kullanıcıları seçiyoruz
+                                var selectedUsers = p.Departments
+                                    .SelectMany(department => users.Where(u => u.DepartmentId == department.Id))
+                                    .OrderBy(_ => random.Next()) // Rastgele sırala
+                                    .Take(10) // 10 kullanıcı seç
+                                    .Distinct() // Tekrar eden kullanıcıları kaldır
+                                    .ToList();
+
+                                return selectedUsers;
+                            })
                             .RuleFor(p => p.WorkTasks, f => new List<Domain.Entities.WorkTask>()); // Çalışma görevleri boş bir liste
 
-                                    // 10 adet proje oluşturma
-                                    var projects = projectFaker.Generate(10);
+            // 10 adet proje oluşturma
+            var projects = projectFaker.Generate(50);
 
             var savedProjects = await _projectRepository.AddRangeAsync(projects);
-
 
             return true;
         }
@@ -347,6 +349,44 @@ namespace ManagementSystem.Domain.Services.Concrete.User
                 );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        public async Task<bool> CreateCommentToRandomTasks(int userId, CancellationToken cancellationToken = default)
+        {
+            var tasks = await _workTaskRepository.GetAllAsync(
+                noTracking: false,
+                cancellationToken);
+            if (tasks is null || tasks.Count == 0)
+                return false;
+
+            var commentFaker = new Faker<Domain.Entities.Comment>("tr")
+                .RuleFor(c => c.Content, f => f.Lorem.Sentence())
+                .RuleFor(c => c.UserId, userId)
+                .RuleFor(c => c.TaskId, t =>
+                {
+                    var random = new Random();
+                    return tasks[random.Next(tasks.Count)].Id; // tasks listesinden rastgele bir görevin id'sini seçer
+                });
+
+            var user = await _userRepository.FirstOrDefaultAsync(
+                predicate: u => u.Id == userId,
+                noTracking: false,
+                cancellationToken: default,
+                c => c.Comments);
+
+            var comments = commentFaker.Generate(tasks.Count);
+            user.Comments ??= new List<Domain.Entities.Comment>();
+
+            if (comments is not null && comments.Count > 0)
+            {
+                foreach (var comment in comments)
+                {
+                    user.Comments.Add(comment);
+                }  
+            }
+
+            var result = await _userRepository.SaveChangeAsync();
+            return result > 0;
         }
     }
 }

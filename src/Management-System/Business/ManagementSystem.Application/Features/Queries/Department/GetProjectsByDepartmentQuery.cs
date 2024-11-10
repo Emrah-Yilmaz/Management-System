@@ -4,7 +4,7 @@ using MediatR;
 
 namespace ManagementSystem.Application.Features.Queries.Department
 {
-    public class GetDepartmentQuery : GetByIdArgs, IRequest<DepartmentDto>
+    public class GetProjectsByDepartmentQuery : GetByIdArgs, IRequest<DepartmentDto>
     {
     }
 }

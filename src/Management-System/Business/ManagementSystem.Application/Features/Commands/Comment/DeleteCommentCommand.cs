@@ -1,9 +1,9 @@
-﻿using ManagementSystem.Domain.Models.Args.Comment;
+﻿using CommonLibrary.Models.Args;
 using MediatR;
 
 namespace ManagementSystem.Application.Features.Commands.Comment
 {
-    public class DeleteCommentCommand : GetCommentArgs, IRequest<bool>
+    public class DeleteCommentCommand : GetByIdArgs, IRequest<bool>
     {
     }
 }

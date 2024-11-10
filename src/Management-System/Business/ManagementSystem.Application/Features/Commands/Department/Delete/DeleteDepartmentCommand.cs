@@ -1,11 +1,11 @@
-﻿using CommonLibrary.Resources;
-using ManagementSystem.Domain.Models.Args.Department;
+﻿using CommonLibrary.Models.Args;
+using CommonLibrary.Resources;
 using MediatR;
 using Packages.Pipelines.Caching;
 
 namespace ManagementSystem.Application.Features.Commands.Department.Delete
 {
-    public class DeleteDepartmentCommand : GetDepartmentArgs, IRequest<int>, ICacheRemoverRequest
+    public class DeleteDepartmentCommand : GetByIdArgs, IRequest<int>, ICacheRemoverRequest
     {
         public string? CacheKey => default;
 

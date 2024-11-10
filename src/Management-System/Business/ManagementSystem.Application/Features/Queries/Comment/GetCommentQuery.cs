@@ -1,10 +1,10 @@
-﻿using ManagementSystem.Domain.Models.Args.Comment;
+﻿using CommonLibrary.Models.Args;
 using ManagementSystem.Domain.Models.Dto;
 using MediatR;
 
 namespace ManagementSystem.Application.Features.Queries.Comment
 {
-    public class GetCommentQuery : GetCommentArgs, IRequest<GetCommentDto>
+    public class GetCommentQuery : GetByIdArgs, IRequest<GetCommentDto>
     {
     }
 }

@@ -71,6 +71,20 @@ namespace ManagementSystem.WebApi.Controllers
                 return NotFound();
             }
 
+            return Ok(mappedResult); 
+        }
+        [ProducesResponseType(typeof(bool), StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [HttpGet("{Id}/change-status")]
+        public async Task<IActionResult> ChangeStatus([FromQuery] ChangeStatusCommentCommand command, CancellationToken cancellationToken = default)
+        {
+            var result = await _mediator.Send(command, cancellationToken);
+            var mappedResult = _mapper.Map<GetCommentResponse>(result);
+            if (mappedResult is null)
+            {
+                return NotFound();
+            }
+
             return Ok(mappedResult);
         }
     }

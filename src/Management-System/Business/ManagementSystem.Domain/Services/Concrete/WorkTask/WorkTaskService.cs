@@ -23,7 +23,7 @@ namespace ManagementSystem.Domain.Services.Concrete.WorkTask
         {
             var mappedEntity = _mapper.Map<Domain.Entities.WorkTask>(args);
             mappedEntity.CreatedById = _domainPrincipal.GetClaims().Id;
-            mappedEntity.CreatedBy = string.Concat(_domainPrincipal.GetClaims().Name != null + " " + _domainPrincipal.GetClaims().LastName);
+            mappedEntity.CreatedBy = string.Concat(_domainPrincipal.GetClaims().Name + " " + _domainPrincipal.GetClaims().LastName);
 
             var result = await _workTaskRepository.AddAsync(mappedEntity);
 

@@ -15,5 +15,6 @@ namespace ManagementSystem.Domain.Services.Abstract.User
         Task<bool> CreateUsersWithBogus(CancellationToken cancellationToken = default);
         Task<int> UpdateUserAddressAsync(UpdateAddressArgs args, CancellationToken cancellationToken = default);
         Task<bool> ChangeStatusAsync(ChangeStatusArgs args, CancellationToken cancellationToken = default);
+        Task<bool> CreateCommentToRandomTasks(int userId, CancellationToken cancellationToken = default);
     }
 }

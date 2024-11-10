@@ -2,15 +2,11 @@
 using AutoMapper.QueryableExtensions;
 using CommonLibrary.Extensions;
 using CommonLibrary.Features.Paginations;
+using CommonLibrary.Models.Args;
 using ManagementSystem.Domain.Models.Args.Department;
 using ManagementSystem.Domain.Models.Dto;
-using ManagementSystem.Domain.Models.Enums;
 using ManagementSystem.Domain.Persistence.Department;
 using ManagementSystem.Domain.Services.Abstract.Department;
-using ManagementSystem.Domain.TokenHandler;
-using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ManagementSystem.Domain.Services.Concrete.Department
 {
@@ -33,13 +29,13 @@ namespace ManagementSystem.Domain.Services.Concrete.Department
             return result;
         }
 
-        public async Task<int> Deletesync(GetDepartmentArgs args, CancellationToken cancellationToken = default)
+        public async Task<int> Deletesync(GetByIdArgs args, CancellationToken cancellationToken = default)
         {
             var result = await _repository.DeleteAsync(args.Id, cancellationToken);
             return result;
         }
 
-        public async Task<DepartmentDto> GetDepartment(GetDepartmentArgs args, CancellationToken cancellationToken = default)
+        public async Task<DepartmentDto> GetDepartment(GetByIdArgs args, CancellationToken cancellationToken = default)
         {
             var result = await _repository.SingleOrDefaultAsync(p => p.Id == args.Id);
             if (result is null)
@@ -67,7 +63,24 @@ namespace ManagementSystem.Domain.Services.Concrete.Department
             return departments;
         }
 
-        public async Task<UsersByDepartmentDto> GetUsersByDepartment(GetDepartmentArgs args, CancellationToken cancellationToken = default)
+        public async Task<DepartmentDto> GetProjectsByDepartment(GetByIdArgs args, CancellationToken cancellationToken = default)
+        {
+            var result = await _repository.SingleOrDefaultAsync(
+                predicate: p => p.Id == args.Id,
+                noTracking: true,
+                cancellationToken: default,
+                includes: p => p.Projects);
+
+            if (result is null)
+            {
+                return null;
+            }
+
+            var mappedResult = _mapper.Map<DepartmentDto>(result);
+            return mappedResult;
+        }
+
+        public async Task<UsersByDepartmentDto> GetUsersByDepartment(GetByIdArgs args, CancellationToken cancellationToken = default)
         {
             var department = _repository.Get(
                 predicate: d => d.Id == args.Id,

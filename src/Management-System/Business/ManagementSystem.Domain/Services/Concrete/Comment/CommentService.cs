@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using CommonLibrary.Models.Args;
 using ManagementSystem.Domain.Models.Args.Comment;
 using ManagementSystem.Domain.Models.Dto;
 using ManagementSystem.Domain.Models.Enums;
@@ -48,7 +49,7 @@ namespace ManagementSystem.Domain.Services.Concrete.Comment
             return result;
         }
 
-        public async Task<bool> DeleteAsync(GetCommentArgs args, CancellationToken cancellationToken = default)
+        public async Task<bool> DeleteAsync(GetByIdArgs args, CancellationToken cancellationToken = default)
         {
             var entity = GetEntity(args.Id);
             if (entity is null)
@@ -68,7 +69,7 @@ namespace ManagementSystem.Domain.Services.Concrete.Comment
             return true;
         }
 
-        public async Task<GetCommentDto> GetAsync(GetCommentArgs args, CancellationToken cancellationToken = default)
+        public async Task<GetCommentDto> GetAsync(GetByIdArgs args, CancellationToken cancellationToken = default)
         {
             var entity = GetEntity(args.Id);
             if (entity is null)
@@ -96,6 +97,25 @@ namespace ManagementSystem.Domain.Services.Concrete.Comment
             var result = await _repository.UpdateAsync(mappedResult, cancellationToken);
 
             return result;
+        } 
+
+        public async Task<bool> ChangeStatus(ChangeStatusCommentArgs args, CancellationToken cancellationToken = default)
+        {
+            var entity = await _repository.FirstOrDefaultAsync(
+                predicate: c => c.Id == args.CommentId,
+                noTracking: false,
+                cancellationToken: default,
+                includes: null
+            );
+            if (entity is null)
+                return false;
+
+            ProcessOwner(entity);
+
+            entity.Status = args.StatusType.ToString();
+            var result = await _repository.SaveChangeAsync(cancellationToken: default);
+            return result > 0;
         }
+
     }
 }
