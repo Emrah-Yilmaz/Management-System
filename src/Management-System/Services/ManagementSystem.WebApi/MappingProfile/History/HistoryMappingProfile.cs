@@ -11,7 +11,8 @@ namespace ManagementSystem.WebApi.MappingProfile.History
         {
             CreateMap<HistoryDto, LogResponse>()
                        .ForMember(dest => dest.ChangedBy, opt =>
-                           opt.MapFrom(src => Newtonsoft.Json.JsonConvert.DeserializeObject<ChangedByInfo>(src.ChangedBy)));
+                            opt.MapFrom(src => System.Text.Json.JsonSerializer.Deserialize<ChangedByInfo>(src.ChangedBy, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })));
+
 
             CreateMap<List<HistoryDto>, HistoryResponse>()
                 .ConvertUsing<HistoryDtoListConverter>();
