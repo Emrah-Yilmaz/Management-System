@@ -30,6 +30,7 @@ namespace ManagementSystem.WebApi.Controllers
             {
                 return BadRequest();
             }
+
             return Ok(result);
         }
 
