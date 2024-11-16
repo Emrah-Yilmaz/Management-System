@@ -8,5 +8,6 @@
       public string StatusId { get; set; }
       public int AssignedUserId { get; set; }
       public int DepartmentId { get; set; }
+      public int ProjectId { get; set; }
     }
 }
