@@ -13,24 +13,5 @@ namespace ManagementSystem.Infrastructure.Persistence.User
         {
             _dbContext = dbContext;
         }
-
-        public async Task<List<Domain.Entities.User>?> GetUserWithProjectsAsync()
-        {
-            try
-            {
-                var usersWithProjects = _dbContext.User
-.Include(u => u.Projects)
-.ToList();
-
-                return usersWithProjects;
-            }
-            catch (Exception ex)
-            {
-
-                throw;
-            }
-
-
-        }
     }
 }
