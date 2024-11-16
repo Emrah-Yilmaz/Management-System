@@ -13,14 +13,12 @@ namespace ManagementSystem.WebApi.MappingProfile.History
                        .ForMember(dest => dest.ChangedBy, opt =>
                             opt.MapFrom(src => System.Text.Json.JsonSerializer.Deserialize<ChangedByInfo>(src.ChangedBy, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })));
 
-
             CreateMap<List<HistoryDto>, HistoryResponse>()
                 .ConvertUsing<HistoryDtoListConverter>();
         }
     }
     public class HistoryDtoListConverter : ITypeConverter<List<HistoryDto>, HistoryResponse>
     {
-
         public HistoryResponse Convert(List<HistoryDto> source, HistoryResponse destination, ResolutionContext context)
         {
             return new HistoryResponse
