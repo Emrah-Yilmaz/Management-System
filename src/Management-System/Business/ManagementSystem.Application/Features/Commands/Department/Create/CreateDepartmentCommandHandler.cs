@@ -22,6 +22,7 @@ namespace ManagementSystem.Application.Features.Commands.Department.Create
         public async Task<int> Handle(CreateDepartmentCommand request, CancellationToken cancellationToken)
         {
             var result = await _service.CreateAsync(request, cancellationToken);
+
             var @eventCreateDepartment = new SendEmailEvent()
             {
                 Id = result,

@@ -45,7 +45,7 @@ namespace ManagementSystem.WebApi.Controllers
         [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetById([FromRoute] GetWorkTaskQuery request, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetTask([FromRoute] GetWorkTaskQuery request, CancellationToken cancellationToken = default)
         {
             var result = await _mediator.Send(request);
             if (result is null)
