@@ -10,7 +10,7 @@ namespace ManagementSystem.Domain.Entities
         public string Email { get; set; }
         public string PasswordHash { get; set; }
         public virtual ICollection<Comment>? Comments { get; set; }
-        public virtual ICollection<UserRole>? UserRoles { get; set; }
+        public virtual ICollection<Role>? Roles { get; set; }
         public virtual ICollection<WorkTask>? WorkTasks { get; set; }
         public ICollection<Project> Projects { get; set; } = new List<Project>();
 

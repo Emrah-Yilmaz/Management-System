@@ -308,7 +308,7 @@ namespace Packages.Repositories.EfCore
 
         private IQueryable<TEntity> ApplyIncludes(IQueryable<TEntity> query, Expression<Func<TEntity, object>>[] includes)
         {
-            if (includes is not null)
+            if (includes?.Any() == true)
             {
                 foreach (var include in includes)
                 {

@@ -89,40 +89,5 @@ namespace ManagementSystem.WebApi.Controllers
             var mappedResult = _mapper.Map<UserResponse>(result);
             return Ok(mappedResult);
         }
-
-        [HttpGet("users")]
-        [ProducesResponseType(typeof(List<UserResponse>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetUsers([FromQuery] GetUsersRequest request, CancellationToken cancellationToken = default)
-        {
-            var query = new GetUsersQuery();
-            query.UserRequestType = request.UserRequestType;
-
-            var result = await _mediator.Send(query, cancellationToken);
-
-            if (result is null || result.Count == 0)
-            {
-                return NotFound();
-            }
-            var mappedResponse = _mapper.Map<List<UserResponse>>(result);
-            return Ok(mappedResponse);
-        }
-
-        [HttpGet("{userId}/roles")]
-        [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetRoles([FromRoute] int userId, CancellationToken cancellationToken = default)
-        {
-            var query = new GetUserRolesQuery();
-            query.Id = userId;
-            var result = await _mediator.Send(query, cancellationToken);
-            if (result is null)
-            {
-                return NotFound();
-            }
-            var mappedResponse = _mapper.Map<UserResponse>(result);
-            return Ok(mappedResponse);
-        }
-
     }
 }

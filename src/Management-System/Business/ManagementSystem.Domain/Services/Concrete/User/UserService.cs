@@ -12,6 +12,7 @@ using ManagementSystem.Domain.Persistence.Location;
 using ManagementSystem.Domain.Persistence.User;
 using ManagementSystem.Domain.Persistence.WorkTask;
 using ManagementSystem.Domain.Services.Abstract.User;
+using ManagementSystem.Domain.TokenHandler;
 using ManagementSystem.Domain.Utilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -20,6 +21,7 @@ using Packages.Exceptions.Types;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 
 namespace ManagementSystem.Domain.Services.Concrete.User
 {
@@ -32,8 +34,16 @@ namespace ManagementSystem.Domain.Services.Concrete.User
         private readonly IProjectRepository _projectRepository;
         private readonly IAddressRepository _addressRepository;
         private readonly IWorkTaskRepository _workTaskRepository;
+        private readonly IDomainPrincipal _domainPrincipal;
 
-        public UserService(IUserRepository userRepository, IConfiguration configuration, IMapper mapper, IDepartmentRepository departmentRepository, IProjectRepository projectRepository, IAddressRepository addressRepository, IWorkTaskRepository workTaskRepository)
+        public UserService(IUserRepository userRepository, 
+            IConfiguration configuration, 
+            IMapper mapper, 
+            IDepartmentRepository departmentRepository, 
+            IProjectRepository projectRepository, 
+            IAddressRepository addressRepository, 
+            IWorkTaskRepository workTaskRepository, 
+            IDomainPrincipal domainPrincipal)
         {
             _userRepository = userRepository;
             _configuration = configuration;
@@ -42,6 +52,7 @@ namespace ManagementSystem.Domain.Services.Concrete.User
             _projectRepository = projectRepository;
             _addressRepository = addressRepository;
             _workTaskRepository = workTaskRepository;
+            _domainPrincipal = domainPrincipal;
         }
 
         public async Task<bool> AddUserToDepartment(AddUserToDepartmentArgs args, CancellationToken cancellationToken = default)
@@ -288,7 +299,7 @@ namespace ManagementSystem.Domain.Services.Concrete.User
         }
         public async Task<LoginDto> LoginAsync(LoginArgs args, CancellationToken cancellationToken = default)
         {
-            var dbUser = await _userRepository.GetThenInclude(u => u.UserName == args.UserName, false, q => q.Include(ur => ur.UserRoles).ThenInclude(role => role.Role)).FirstOrDefaultAsync();
+            var dbUser = await _userRepository.GetThenInclude(u => u.UserName == args.UserName, false, q => q.Include(ur => ur.Roles)).FirstOrDefaultAsync();
             if (dbUser is null)
                 return null;
 
@@ -307,17 +318,20 @@ namespace ManagementSystem.Domain.Services.Concrete.User
                 UserName = dbUser.UserName,
             };
 
-            var userRole = dbUser.UserRoles?.Select(p => p.Role.Name)?.FirstOrDefault() ?? Roles.None.ToString();
-            var claims = new Claim[]
+            var userRoles = dbUser?.Roles?.Select(p => p.Name).ToList();
+            var claims = new List<Claim>
             {
-
                 new Claim(Shared.JwtClaims.UserId, dbUser.Id.ToString()),
                 new Claim(Shared.JwtClaims.Email, dbUser.Email),
                 new Claim(Shared.JwtClaims.FirstName, dbUser.Name),
                 new Claim(Shared.JwtClaims.LastName, dbUser.LastName),
                 new Claim(Shared.JwtClaims.UserName, dbUser.UserName),
-                new Claim(Shared.JwtClaims.Role, userRole ?? null)
             };
+
+            foreach (var userRole in userRoles)
+            {
+                claims.Add(new Claim(Shared.JwtClaims.Role, userRole));
+            }
 
             model.Token = GenerateToken(claims);
 
@@ -338,7 +352,7 @@ namespace ManagementSystem.Domain.Services.Concrete.User
             return result;
         }
 
-        private string GenerateToken(Claim[] claims)
+        private string GenerateToken(List<Claim> claims)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["AuthConfig:Secret"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -392,19 +406,52 @@ namespace ManagementSystem.Domain.Services.Concrete.User
             return result > 0;
         }
 
-        public async Task<Entities.User> GetUserRoles(GetByIdArgs args, CancellationToken cancellationToken = default)
+        public async Task<UserDto?> GetUserRoles(GetByIdArgs args, CancellationToken cancellationToken = default)
         {
+
             var user = await _userRepository.Get(
-                predicate: u => u.Id == args.Id,
-                noTracking: true,
-                includes: r => r.UserRoles
-                ).FirstOrDefaultAsync();
-            if (user is null)
+                     predicate: u => u.Id == args.Id,
+                     includes: null)
+            .Select(u => new UserDto 
             {
+                Name = u.Name,
+                LastName = u.LastName,
+                Email = u.Email,
+                UserName = u.UserName,
+                Roles = u.Roles.Select(r => new RoleDto
+                    {
+                        Id = r.Id,
+                        Name = r.Name
+                    }).ToList()
+            }).FirstOrDefaultAsync();
+
+            if (user is null)
                 return null;
-            }
 
             return user;
+        }
+
+        public async Task<bool> AssignRoleAsync(GetByIdArgs args, CancellationToken cancellationToken = default)
+        {
+            var user = await _userRepository.Get(
+                     predicate: u => u.Id == args.Id,
+                     includes: r => r.Roles).FirstOrDefaultAsync();
+            if (user is null)
+                return false;
+
+            var roles = _domainPrincipal.GetClaims().Roles;
+
+            var isAllowed = roles.Any(p => p.Equals("Admin"));
+            if (!isAllowed)
+            {
+                throw new Exception("You do not have authorization to perform this action.");
+            }
+
+            user.Roles.Add(new Role
+            {
+                Name = Roles.Employee.ToString()
+            });
+            return true;
         }
     }
 }

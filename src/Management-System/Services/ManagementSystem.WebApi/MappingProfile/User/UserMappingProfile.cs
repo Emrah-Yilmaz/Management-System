@@ -1,5 +1,6 @@
 ﻿using ManagementSystem.Domain.Models.Dto;
 using ManagementSystem.WebApi.Models.Response;
+using ManagementSystem.WebApi.Models.Response.Role;
 using ManagementSystem.WebApi.Models.Response.User;
 
 namespace ManagementSystem.WebApi.MappingProfile.User
@@ -12,11 +13,13 @@ namespace ManagementSystem.WebApi.MappingProfile.User
 
             CreateMap<UserDto, UserResponse>()
                 .ForMember(dest => dest.Department, opt => opt.MapFrom(src => src.Department))
-                .ForMember(dest => dest.Addresses, opt => opt.MapFrom(src => src.Addresses));
-
+                .ForMember(dest => dest.Addresses, opt => opt.MapFrom(src => src.Addresses))
+                .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => src.Roles));
+            
             CreateMap<ProjectDto, ProjectResponse>();
             CreateMap<ProjectDto, ProjectResponse>();
             CreateMap<DepartmentDto, DepartmentOfUserResponse>();
+            CreateMap<RoleDto, RoleResponse>();
         }
     }
 }

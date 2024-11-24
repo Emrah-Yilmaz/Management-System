@@ -29,7 +29,6 @@ namespace ManagementSystem.Infrastructure.Context
         public DbSet<WorkTask> Task { get; set; }
         public DbSet<Comment> Comment { get; set; }
         public DbSet<Role> Role { get; set; }
-        public DbSet<UserRole> UserRole { get; set; }
         public DbSet<Status> Status { get; set; }
         public DbSet<Department> Department { get; set; }
         public DbSet<Project> Projects { get; set; }
@@ -45,31 +44,18 @@ namespace ManagementSystem.Infrastructure.Context
             if (!optionsBuilder.IsConfigured)
             {
                 var connStr = "server=.\\;database=ProjectManagement; integrated security=true; TrustServerCertificate=true;";
-                optionsBuilder.UseSqlServer(connStr, opt =>
-                {
-                    opt.EnableRetryOnFailure();
-                });
+                optionsBuilder
+                    .UseSqlServer(connStr, opt =>
+                    {
+                        opt.EnableRetryOnFailure();
+                    })
+                    .UseLazyLoadingProxies(false); // Lazy Loading'i devre dışı bırak
             }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            modelBuilder.Entity<UserRole>()
-                .HasKey(ur => ur.Id);
-
-            modelBuilder.Entity<UserRole>()
-                .HasOne(ur => ur.User)
-                .WithMany(u => u.UserRoles)
-                .HasForeignKey(ur => ur.UserId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            modelBuilder.Entity<UserRole>()
-                .HasOne(ur => ur.Role)
-                .WithMany(r => r.UserRoles)
-                .HasForeignKey(ur => ur.RoleId)
-                .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<Comment>()
                 .HasOne(c => c.User)
@@ -145,6 +131,14 @@ namespace ManagementSystem.Infrastructure.Context
             modelBuilder.Entity<Address>()
                 .Property(a => a.Description)
                 .HasMaxLength(500);
+
+            modelBuilder.Entity<Role>()
+                .Navigation(r => r.Users)
+                .AutoInclude(false); // Varsayılan olarak yüklenmesin
+
+            modelBuilder.Entity<User>()
+                .Navigation(r => r.Roles)
+                .AutoInclude(false); // Varsayılan olarak yüklenmesin
 
 
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());

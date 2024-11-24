@@ -23,7 +23,6 @@ namespace ManagementSystem.Domain.MappingProfile.User
                 .ForMember(dest => dest.Quarter, opt => opt.MapFrom(src => src.Quarter.Name)).ReverseMap();
             CreateMap<Domain.Entities.Project, ProjectDto>();
             CreateMap<CreateUserArgs, Domain.Entities.User>();
-
         }
     }
 }

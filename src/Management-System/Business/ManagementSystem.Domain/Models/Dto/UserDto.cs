@@ -12,5 +12,6 @@ namespace ManagementSystem.Domain.Models.Dto
         public int DepartmentId { get; set; }
         public DepartmentDto Department { get; set; }
         public List<AddressDto>? Addresses { get; set; }
+        public List<RoleDto>? Roles { get; set; }
     }
 }

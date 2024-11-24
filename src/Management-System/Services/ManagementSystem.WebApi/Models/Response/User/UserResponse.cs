@@ -1,4 +1,5 @@
 ﻿using ManagementSystem.WebApi.Models.Response.Location;
+using ManagementSystem.WebApi.Models.Response.Role;
 
 namespace ManagementSystem.WebApi.Models.Response.User
 {
@@ -11,5 +12,6 @@ namespace ManagementSystem.WebApi.Models.Response.User
         public string Email { get; set; }
         public List<AddressResponse>? Addresses { get; set; }
         public DepartmentOfUserResponse? Department { get; set; }
+        public List<RoleResponse>? Roles { get; set; }
     }
 }
