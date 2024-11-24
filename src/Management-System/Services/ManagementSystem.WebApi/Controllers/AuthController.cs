@@ -28,7 +28,9 @@ namespace ManagementSystem.WebApi.Controllers
         public async Task<IActionResult> Login([FromBody] LoginUserCommand command, CancellationToken cancellationToken = default)
         {
             var result = await _mediator.Send(command);
+
             var mappedResult = _mapper.Map<LoginResponse>(result);
+
             if (mappedResult is null)
             {
                 return NotFound("Kullanıcı Bulunamadı");

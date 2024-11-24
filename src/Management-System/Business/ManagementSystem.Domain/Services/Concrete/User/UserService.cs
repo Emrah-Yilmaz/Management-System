@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Bogus;
+using CommonLibrary.Models.Args;
 using ManagementSystem.Domain.Entities;
 using ManagementSystem.Domain.Models.Args.User;
 using ManagementSystem.Domain.Models.Dto;
@@ -213,7 +214,7 @@ namespace ManagementSystem.Domain.Services.Concrete.User
 
         public async Task<UserDto> GetUser(int userId, CancellationToken cancellationToken = default)
         {
-            var user = _userRepository.GetThenInclude(
+            var user = await _userRepository.GetThenInclude(
                        predicate: u => u.Id == userId,
                         noTracking: true,
                         includes: new Func<IQueryable<Entities.User>, IQueryable<Entities.User>>[]
@@ -223,7 +224,7 @@ namespace ManagementSystem.Domain.Services.Concrete.User
                             q => q.Include(u => u.Addresses).ThenInclude(a => a.City),// Address'ten City'e geçiş
                             q => q.Include(u => u.Addresses).ThenInclude(a => a.District), // Address'ten City'e geçiş
                             q => q.Include(u => u.Addresses).ThenInclude(a => a.Quarter) // Address'ten City'e geçiş
-                        }).FirstOrDefault();
+                        }).FirstOrDefaultAsync();
             if (user is null)
                 return null;
 
@@ -234,43 +235,45 @@ namespace ManagementSystem.Domain.Services.Concrete.User
 
         public async Task<List<UserDto>> GetUsers(GetUserArgs args, CancellationToken cancellationToken = default)
         {
-            var includes  = new Func<IQueryable<Entities.User>, IQueryable<Entities.User>>[]{ };
-            var users = new List<Entities.User>();
+            Func<IQueryable<Entities.User>, IQueryable<Entities.User>>[] includes = Array.Empty<Func<IQueryable<Entities.User>, IQueryable<Entities.User>>>();
 
-            if (args.UserRequestType == UserRequestType.Basic)
+            switch (args.UserRequestType)
             {
-                users = await _userRepository.GetListAsync(predicate: null,
-                            noTracking: false,
-                            orderBy: null,
-                            includes: null);
-                return Map(users);
-            }
-            else if (args.UserRequestType == UserRequestType.Address)
-            {
-                includes = new Func<IQueryable<Entities.User>, IQueryable<Entities.User>>[]
-                {
-                    q => q.Include(u => u.Addresses), // User'dan Addresses'e geçiş
-                    q => q.Include(u => u.Addresses).ThenInclude(a => a.City),// Address'ten City'e geçiş
-                    q => q.Include(u => u.Addresses).ThenInclude(a => a.District), // Address'ten City'e geçiş
-                    q => q.Include(u => u.Addresses).ThenInclude(a => a.Quarter) // Address'ten City'e geçiş
-                };
-            }
-            else
-            {
-                includes = new Func<IQueryable<Entities.User>, IQueryable<Entities.User>>[]
-                            {
-                            q => q.Include(d => d.Department).ThenInclude(p => p.Projects),
-                            q => q.Include(u => u.Addresses), // User'dan Addresses'e geçiş
-                            q => q.Include(u => u.Addresses).ThenInclude(a => a.City),// Address'ten City'e geçiş
-                            q => q.Include(u => u.Addresses).ThenInclude(a => a.District), // Address'ten City'e geçiş
-                            q => q.Include(u => u.Addresses).ThenInclude(a => a.Quarter) // Address'ten City'e geçiş
-                            };
+                case UserRequestType.Basic:
+                    var basicUsers = await _userRepository.GetListAsync(
+                        predicate: x => false,
+                        noTracking: false,
+                        cancellationToken,
+                        orderBy: null,
+                        includes: null);
+                    return Map(basicUsers);
+
+                case UserRequestType.Address:
+                    includes = new Func<IQueryable<Entities.User>, IQueryable<Entities.User>>[]
+                    {
+                        q => q.Include(u => u.Addresses), // User'dan Addresses'e geçiş
+                        q => q.Include(u => u.Addresses).ThenInclude(a => a.City),// Address'ten City'e geçiş
+                        q => q.Include(u => u.Addresses).ThenInclude(a => a.District), // Address'ten City'e geçiş
+                        q => q.Include(u => u.Addresses).ThenInclude(a => a.Quarter) // Address'ten City'e geçiş
+                    };
+                    break;
+
+                default:
+                    includes = new Func<IQueryable<Entities.User>, IQueryable<Entities.User>>[]
+                    {
+                        q => q.Include(u => u.Department).ThenInclude(d => d.Projects),
+                        q => q.Include(u => u.Addresses), // User'dan Addresses'e geçiş
+                        q => q.Include(u => u.Addresses).ThenInclude(a => a.City),// Address'ten City'e geçiş
+                        q => q.Include(u => u.Addresses).ThenInclude(a => a.District), // Address'ten City'e geçiş
+                        q => q.Include(u => u.Addresses).ThenInclude(a => a.Quarter) // Address'ten City'e geçiş
+                    };
+                    break;
             }
 
-            users = _userRepository.GetThenInclude(
-                             predicate: null,
-                             noTracking: true,
-                             includes: includes).ToList();
+            var users = await _userRepository.GetThenInclude(
+                predicate: null,
+                noTracking: true,
+                includes: includes).ToListAsync();
 
             return Map(users);
         }
@@ -285,7 +288,7 @@ namespace ManagementSystem.Domain.Services.Concrete.User
         }
         public async Task<LoginDto> LoginAsync(LoginArgs args, CancellationToken cancellationToken = default)
         {
-            var dbUser =  _userRepository.GetThenInclude(u => u.UserName == args.UserName, false, q => q.Include(ur => ur.UserRoles).ThenInclude(role => role.Role)).FirstOrDefault();
+            var dbUser = await _userRepository.GetThenInclude(u => u.UserName == args.UserName, false, q => q.Include(ur => ur.UserRoles).ThenInclude(role => role.Role)).FirstOrDefaultAsync();
             if (dbUser is null)
                 return null;
 
@@ -387,6 +390,21 @@ namespace ManagementSystem.Domain.Services.Concrete.User
 
             var result = await _userRepository.SaveChangeAsync();
             return result > 0;
+        }
+
+        public async Task<Entities.User> GetUserRoles(GetByIdArgs args, CancellationToken cancellationToken = default)
+        {
+            var user = await _userRepository.Get(
+                predicate: u => u.Id == args.Id,
+                noTracking: true,
+                includes: r => r.UserRoles
+                ).FirstOrDefaultAsync();
+            if (user is null)
+            {
+                return null;
+            }
+
+            return user;
         }
     }
 }

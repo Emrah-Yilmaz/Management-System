@@ -18,5 +18,15 @@ namespace ManagementSystem.WebApi.Extensions
                 config.AllowNullCollections = true;
             },assemblies);
         }
+
+        public static IApplicationBuilder UseLowercaseUrls(this IApplicationBuilder app)
+        {
+            return app.Use(async (context, next) =>
+            {
+                // Küçük harfe dönüştürme
+                context.Request.Path = context.Request.Path.Value.ToLower();
+                await next();
+            });
+        }
     }
 }

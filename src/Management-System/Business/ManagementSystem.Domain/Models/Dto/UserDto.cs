@@ -1,4 +1,6 @@
-﻿namespace ManagementSystem.Domain.Models.Dto
+﻿using ManagementSystem.Domain.Models.Enums;
+
+namespace ManagementSystem.Domain.Models.Dto
 {
     public class UserDto
     {
