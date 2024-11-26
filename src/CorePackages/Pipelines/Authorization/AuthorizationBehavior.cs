@@ -1,5 +1,7 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
+using static Packages.Resources.Constants;
 
 namespace Packages.Pipelines.Authorization
 {
@@ -18,10 +20,16 @@ namespace Packages.Pipelines.Authorization
             {
                 var user = _httpContextAccessor.HttpContext?.User;
 
-                if (user == null || !user.IsInRole(authorizationRequest.RequiredRole))
-                {
-                    throw new UnauthorizedAccessException($"User does not have the required role: {authorizationRequest.RequiredRole}");
-                }
+                if (user == null || !user.Identity?.IsAuthenticated == true)
+                    throw new UnauthorizedAccessException(AuthorizationErrorMessage.UserNotAuthenticated);
+
+                var roles = user.FindAll(ClaimTypes.Role).Select(c => c.Value);
+
+                if (roles.Contains("Admin"))
+                    return await next();
+                
+                if (!roles.Contains(authorizationRequest.RequiredRole))
+                    throw new UnauthorizedAccessException(string.Format(AuthorizationErrorMessage.UserNotAuthorized, authorizationRequest.RequiredRole));
             }
 
             return await next();

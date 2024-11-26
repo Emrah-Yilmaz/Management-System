@@ -330,7 +330,7 @@ namespace ManagementSystem.Domain.Services.Concrete.User
 
             foreach (var userRole in userRoles)
             {
-                claims.Add(new Claim(Shared.JwtClaims.Role, userRole));
+                claims.Add(new Claim(ClaimTypes.Role, userRole));
             }
 
             model.Token = GenerateToken(claims);
