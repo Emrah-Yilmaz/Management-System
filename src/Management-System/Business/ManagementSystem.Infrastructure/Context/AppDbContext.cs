@@ -57,6 +57,14 @@ namespace ManagementSystem.Infrastructure.Context
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.Roles)
+                .WithMany(r => r.Users)
+                .UsingEntity<Dictionary<string, object>>(
+                    "RoleUser", // Ara tablonun adı
+                    j => j.HasOne<Role>().WithMany().HasForeignKey("RolesId"),
+                    j => j.HasOne<User>().WithMany().HasForeignKey("UsersId"));
+
             modelBuilder.Entity<Comment>()
                 .HasOne(c => c.User)
                 .WithMany(u => u.Comments)

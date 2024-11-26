@@ -2,7 +2,7 @@
 {
     public interface IRequireAuthorization
     {
-        string RequiredRole { get; }
+        List<string> RequiredRole { get; }
     }
 
 }

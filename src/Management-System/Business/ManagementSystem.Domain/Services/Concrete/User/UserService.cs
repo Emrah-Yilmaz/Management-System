@@ -9,6 +9,7 @@ using ManagementSystem.Domain.PasswordEncryptor;
 using ManagementSystem.Domain.Persistence.Comment;
 using ManagementSystem.Domain.Persistence.Department;
 using ManagementSystem.Domain.Persistence.Location;
+using ManagementSystem.Domain.Persistence.NewFolder;
 using ManagementSystem.Domain.Persistence.User;
 using ManagementSystem.Domain.Persistence.WorkTask;
 using ManagementSystem.Domain.Services.Abstract.User;
@@ -22,6 +23,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using static ManagementSystem.Domain.Utilities.Shared;
 
 namespace ManagementSystem.Domain.Services.Concrete.User
 {
@@ -34,16 +36,16 @@ namespace ManagementSystem.Domain.Services.Concrete.User
         private readonly IProjectRepository _projectRepository;
         private readonly IAddressRepository _addressRepository;
         private readonly IWorkTaskRepository _workTaskRepository;
-        private readonly IDomainPrincipal _domainPrincipal;
+        private readonly IRoleRepository _roleRepository;
 
-        public UserService(IUserRepository userRepository, 
-            IConfiguration configuration, 
-            IMapper mapper, 
-            IDepartmentRepository departmentRepository, 
-            IProjectRepository projectRepository, 
-            IAddressRepository addressRepository, 
-            IWorkTaskRepository workTaskRepository, 
-            IDomainPrincipal domainPrincipal)
+        public UserService(IUserRepository userRepository,
+            IConfiguration configuration,
+            IMapper mapper,
+            IDepartmentRepository departmentRepository,
+            IProjectRepository projectRepository,
+            IAddressRepository addressRepository,
+            IWorkTaskRepository workTaskRepository,
+            IRoleRepository roleRepository)
         {
             _userRepository = userRepository;
             _configuration = configuration;
@@ -52,7 +54,7 @@ namespace ManagementSystem.Domain.Services.Concrete.User
             _projectRepository = projectRepository;
             _addressRepository = addressRepository;
             _workTaskRepository = workTaskRepository;
-            _domainPrincipal = domainPrincipal;
+            _roleRepository = roleRepository;
         }
 
         public async Task<bool> AddUserToDepartment(AddUserToDepartmentArgs args, CancellationToken cancellationToken = default)
@@ -431,27 +433,29 @@ namespace ManagementSystem.Domain.Services.Concrete.User
             return user;
         }
 
-        public async Task<bool> AssignRoleAsync(GetByIdArgs args, CancellationToken cancellationToken = default)
+        public async Task<bool> AssignRoleAsync(AssignRoleArgs args, CancellationToken cancellationToken = default)
         {
             var user = await _userRepository.Get(
-                     predicate: u => u.Id == args.Id,
-                     includes: r => r.Roles).FirstOrDefaultAsync();
+                predicate: u => u.Id == args.Id,
+                noTracking: false,
+                includes: r => r.Roles).FirstOrDefaultAsync();
+
             if (user is null)
-                return false;
+                throw new BusinessException(ErrorMessage.UserNotFound);
 
-            var roles = _domainPrincipal.GetClaims().Roles;
+            var role = await _roleRepository.Get(
+                predicate: r => r.Name == args.Roles.ToString(),
+                noTracking: true).FirstOrDefaultAsync();
 
-            var isAllowed = roles.Any(p => p.Equals("Admin"));
-            if (!isAllowed)
-            {
-                throw new Exception("You do not have authorization to perform this action.");
-            }
+            if (role is null)
+                throw new BusinessException(ErrorMessage.RoleNotFound);
 
-            user.Roles.Add(new Role
-            {
-                Name = Roles.Employee.ToString()
-            });
-            return true;
+            if (user.Roles.Any(r => r.Id == role.Id))
+                throw new BusinessException(ErrorMessage.UserAlreadyHasRole);
+
+            user.Roles.Add(role);
+
+            return await _userRepository.UpdateAsync(user, cancellationToken) > 0 ; 
         }
     }
 }

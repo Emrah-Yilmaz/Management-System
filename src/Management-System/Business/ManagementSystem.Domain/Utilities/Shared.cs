@@ -12,5 +12,12 @@
             public const string Unknown = "Unknown";
             public const string Role = "Role";
         }
+        public struct ErrorMessage
+        {
+            public const string UserNotFound = "User is not found.";
+            public const string RoleNotFound = "Role is not found.";
+            public const string UserAlreadyHasRole = "User already has role.";
+
+        }
     }
 }

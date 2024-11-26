@@ -28,7 +28,7 @@ namespace Packages.Pipelines.Authorization
                 if (roles.Contains("Admin"))
                     return await next();
                 
-                if (!roles.Contains(authorizationRequest.RequiredRole))
+                if (!roles.Intersect(authorizationRequest.RequiredRole).Any())
                     throw new UnauthorizedAccessException(string.Format(AuthorizationErrorMessage.UserNotAuthorized, authorizationRequest.RequiredRole));
             }
 
