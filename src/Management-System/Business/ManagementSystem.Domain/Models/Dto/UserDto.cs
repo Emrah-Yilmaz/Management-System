@@ -1,4 +1,6 @@
-﻿namespace ManagementSystem.Domain.Models.Dto
+﻿using ManagementSystem.Domain.Models.Enums;
+
+namespace ManagementSystem.Domain.Models.Dto
 {
     public class UserDto
     {
@@ -10,5 +12,6 @@
         public int DepartmentId { get; set; }
         public DepartmentDto Department { get; set; }
         public List<AddressDto>? Addresses { get; set; }
+        public List<RoleDto>? Roles { get; set; }
     }
 }

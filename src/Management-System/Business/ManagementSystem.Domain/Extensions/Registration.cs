@@ -26,6 +26,7 @@ namespace ManagementSystem.Domain.Extensions
             services.AddScoped<ICommentService, CommentService>();
             services.AddScoped<ILocationService, LocationService>();
             services.AddScoped<IHistoryService, HistoryService>();
+
             return services;
         }
     }

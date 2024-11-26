@@ -1,4 +1,5 @@
-﻿using ManagementSystem.Domain.Models.Args.User;
+﻿using CommonLibrary.Models.Args;
+using ManagementSystem.Domain.Models.Args.User;
 using ManagementSystem.Domain.Models.Dto;
 
 namespace ManagementSystem.Domain.Services.Abstract.User
@@ -16,5 +17,8 @@ namespace ManagementSystem.Domain.Services.Abstract.User
         Task<int> UpdateUserAddressAsync(UpdateAddressArgs args, CancellationToken cancellationToken = default);
         Task<bool> ChangeStatusAsync(ChangeStatusArgs args, CancellationToken cancellationToken = default);
         Task<bool> CreateCommentToRandomTasks(int userId, CancellationToken cancellationToken = default);
+        Task<UserDto> GetUserRoles(GetByIdArgs args, CancellationToken cancellationToken = default);
+        Task<bool> AssignRoleAsync(GetByIdArgs args, CancellationToken cancellationToken = default);
+
     }
 }

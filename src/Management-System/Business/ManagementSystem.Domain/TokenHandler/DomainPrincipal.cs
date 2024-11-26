@@ -21,7 +21,8 @@ namespace ManagementSystem.Domain.TokenHandler
                 Name = _httpContextAccessor?.HttpContext?.User?.Claims?.FirstOrDefault(p => p.Type == Shared.JwtClaims.FirstName)?.Value ?? Shared.JwtClaims.Unknown,
                 LastName = _httpContextAccessor?.HttpContext?.User?.Claims?.FirstOrDefault(p => p.Type == Shared.JwtClaims.LastName)?.Value ?? Shared.JwtClaims.Unknown,
                 UserName = _httpContextAccessor?.HttpContext?.User?.Claims?.FirstOrDefault(p => p.Type == Shared.JwtClaims.UserName)?.Value ?? Shared.JwtClaims.Unknown,
-                Email = _httpContextAccessor?.HttpContext?.User?.Claims?.FirstOrDefault(p => p.Type == Shared.JwtClaims.Email)?.Value ?? Shared.JwtClaims.Unknown
+                Email = _httpContextAccessor?.HttpContext?.User?.Claims?.FirstOrDefault(p => p.Type == Shared.JwtClaims.Email)?.Value ?? Shared.JwtClaims.Unknown,
+                Roles = _httpContextAccessor?.HttpContext?.User?.Claims?.Where(p => p.Type == Shared.JwtClaims.Role)?.Select(p => p?.Value).ToList()
             };
 
             return model;

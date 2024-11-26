@@ -24,7 +24,11 @@ namespace Packages.Repositories.EfCore
         Task<TEntity> FindAsync(int id, CancellationToken cancellationToken = default);
 
         Task<List<TEntity>> GetAllAsync(bool noTracking = false, CancellationToken cancellationToken = default);
-        Task<List<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> predicate, bool noTracking = false, CancellationToken cancellationToken = default, Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null, params Expression<Func<TEntity, object>>[] includes);
+        Task<List<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> predicate, 
+            bool noTracking = false, 
+            CancellationToken cancellationToken = default, 
+            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null, 
+            params Expression<Func<TEntity, object>>[] includes);
         Task<TEntity> GetByIdAsync(int id, bool noTracking = true, CancellationToken cancellationToken = default, params Expression<Func<TEntity, object>>[] include);
         Task<TEntity> SingleOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, bool noTracking = true, CancellationToken cancellationToken = default, params Expression<Func<TEntity, object>>[] includes);
         Task<TEntity> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, bool noTracking = true, CancellationToken cancellationToken = default, params Expression<Func<TEntity, object>>[] includes);

@@ -106,6 +106,7 @@ builder.Services.AddAuthentication(x =>
     };
 
 });
+builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
 builder.Services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
 {
@@ -124,7 +125,7 @@ if (app.Environment.IsDevelopment())
 
 app.ConfigureCustomerExceptionMiddleware();
 app.UseHttpsRedirection();
-
+app.UseLowercaseUrls(); // Middleware ekleme
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseCors("MyPolicy");
