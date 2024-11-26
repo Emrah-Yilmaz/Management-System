@@ -26,8 +26,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Models\Request\Comment\" />
-    <Folder Include="Models\Request\WorkTask\" />
+    <Folder Include="Areas\Admin\User\MappingProfile\" />
+    <Folder Include="Areas\Admin\User\Models\Requests\" />
+    <Folder Include="Areas\Auth\MappingProfile\" />
+    <Folder Include="Areas\Auth\Models\Requests\" />
+    <Folder Include="Areas\Bogus\MappingProfile\" />
+    <Folder Include="Areas\Bogus\Models\Responses\" />
+    <Folder Include="Areas\Bogus\Models\Requests\" />
+    <Folder Include="Areas\Comments\Models\Requests\" />
+    <Folder Include="Areas\Histories\Models\Requests\" />
+    <Folder Include="Areas\Locations\Models\Requests\" />
+    <Folder Include="Areas\Projects\MappingProfile\" />
+    <Folder Include="Areas\Projects\Models\Requests\" />
+    <Folder Include="Areas\WorkTasks\Models\Requests\" />
   </ItemGroup>
 
   <ItemGroup>
