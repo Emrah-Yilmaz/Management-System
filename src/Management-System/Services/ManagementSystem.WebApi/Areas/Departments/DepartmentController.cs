@@ -1,8 +1,6 @@
 ﻿using AutoMapper;
 using CommonLibrary.Features.Paginations;
-using ManagementSystem.Application.Features.Commands.Department.Create;
-using ManagementSystem.Application.Features.Commands.Department.Delete;
-using ManagementSystem.Application.Features.Commands.Department.Update;
+using ManagementSystem.Application.Features.Commands.Department;
 using ManagementSystem.Application.Features.Queries.Department;
 using ManagementSystem.WebApi.Areas.Base;
 using ManagementSystem.WebApi.Areas.Departments.Models.Requests;

@@ -3,7 +3,7 @@ using CommonLibrary.Resources;
 using MediatR;
 using Packages.Pipelines.Caching;
 
-namespace ManagementSystem.Application.Features.Commands.Department.Delete
+namespace ManagementSystem.Application.Features.Commands.Department
 {
     public class DeleteDepartmentCommand : GetByIdArgs, IRequest<int>, ICacheRemoverRequest
     {

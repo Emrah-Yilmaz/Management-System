@@ -2,10 +2,11 @@
 using ManagementSystem.Domain.Models.Args.Department;
 using MediatR;
 using Packages.Pipelines.Caching;
+using Packages.Pipelines.Logging;
 
-namespace ManagementSystem.Application.Features.Commands.Department.Update
+namespace ManagementSystem.Application.Features.Commands.Department
 {
-    public class UpdateDepartmentCommand : UpdateDepartmenArgs, IRequest<int>, ICacheRemoverRequest
+    public class CreateDepartmentCommand : CreateDepartmentArgs, IRequest<int>, ICacheRemoverRequest, ILoggableRequest
     {
         public string? CacheKey => default;
 

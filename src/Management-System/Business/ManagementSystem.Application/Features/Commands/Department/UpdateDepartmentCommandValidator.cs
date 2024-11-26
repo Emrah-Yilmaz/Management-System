@@ -1,6 +1,6 @@
 ﻿using FluentValidation;
 
-namespace ManagementSystem.Application.Features.Commands.Department.Update
+namespace ManagementSystem.Application.Features.Commands.Department
 {
     public class UpdateDepartmentCommandValidator : AbstractValidator<UpdateDepartmentCommand>
     {

@@ -1,6 +1,6 @@
 ﻿using CommonLibrary.Features.Paginations;
 using CommonLibrary.Models.Args;
-using ManagementSystem.Application.Features.Commands.Department.Delete;
+using ManagementSystem.Application.Features.Commands.Department;
 using ManagementSystem.Domain.Models.Dto;
 using ManagementSystem.WebApi.Areas.Departments.Models.Responses;
 using ManagementSystem.WebApi.Areas.Users.Models.Responses;

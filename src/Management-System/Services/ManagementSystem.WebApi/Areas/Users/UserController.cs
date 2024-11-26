@@ -77,7 +77,7 @@ namespace ManagementSystem.WebApi.Areas.Users
         [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetUser(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetUserProfile(CancellationToken cancellationToken = default)
         {
             var userId = _domainPrincipal.GetClaims()?.Id;
             if (!userId.HasValue)

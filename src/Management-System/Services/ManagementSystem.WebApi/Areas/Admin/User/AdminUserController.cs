@@ -49,7 +49,7 @@ namespace ManagementSystem.WebApi.Areas.Admin.User
 
             return Ok(result);
         }
-        [HttpPost("assing-project")]
+        [HttpPost("assign-project")]
         [ProducesResponseType(typeof(bool), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> AssignProject(AssignProjectCommand request, CancellationToken cancellationToken = default)
@@ -62,7 +62,7 @@ namespace ManagementSystem.WebApi.Areas.Admin.User
             return Ok(result);
         }
 
-        [HttpPost("assing-role")]
+        [HttpPost("assign-role")]
         [ProducesResponseType(typeof(bool), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> AssignRole(AssignRoleCommand request, CancellationToken cancellationToken = default)
@@ -96,7 +96,7 @@ namespace ManagementSystem.WebApi.Areas.Admin.User
         [HttpGet("{userId}/roles")]
         [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetRoles([FromRoute] int userId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetUserRoles([FromRoute] int userId, CancellationToken cancellationToken = default)
         {
             var query = new GetUserRolesQuery();
             query.Id = userId;

@@ -4,7 +4,7 @@ using ManagementSystem.Domain.Models.Args.Department;
 using ManagementSystem.Domain.Services.Abstract.Department;
 using MediatR;
 
-namespace ManagementSystem.Application.Features.Commands.Department.Delete
+namespace ManagementSystem.Application.Features.Commands.Department
 {
     public class DeleteDepartmentCommandHandler : IRequestHandler<DeleteDepartmentCommand, int>
     {
