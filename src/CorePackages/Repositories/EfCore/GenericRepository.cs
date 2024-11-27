@@ -348,10 +348,12 @@ namespace Packages.Repositories.EfCore
             var query = noTracking ? _dbContext.Set<TEntity>().AsNoTracking() : _dbContext.Set<TEntity>();
             if (predicate is not null)
                 query = query.Where(predicate);
-
-            foreach (var include in includes)
+            if (includes is not null)
             {
-                query = include(query);
+                foreach (var include in includes)
+                {
+                    query = include(query);
+                }
             }
 
             return query;

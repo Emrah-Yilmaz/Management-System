@@ -17,7 +17,6 @@
             public const string UserNotFound = "User is not found.";
             public const string RoleNotFound = "Role is not found.";
             public const string UserAlreadyHasRole = "User already has role.";
-
         }
     }
 }

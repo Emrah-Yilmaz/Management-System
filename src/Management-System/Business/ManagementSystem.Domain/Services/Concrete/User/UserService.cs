@@ -1,5 +1,8 @@
 ﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Bogus;
+using CommonLibrary.Extensions;
+using CommonLibrary.Features.Paginations;
 using CommonLibrary.Models.Args;
 using ManagementSystem.Domain.Entities;
 using ManagementSystem.Domain.Models.Args.User;
@@ -24,6 +27,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using static ManagementSystem.Domain.Utilities.Shared;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ManagementSystem.Domain.Services.Concrete.User
 {
@@ -246,20 +250,18 @@ namespace ManagementSystem.Domain.Services.Concrete.User
             return mappedResult;
         }
 
-        public async Task<List<UserDto>> GetUsers(GetUserArgs args, CancellationToken cancellationToken = default)
+        public async Task<PagedViewModel<UserDto>> GetUsers(GetUserArgs args, CancellationToken cancellationToken = default)
         {
             Func<IQueryable<Entities.User>, IQueryable<Entities.User>>[] includes = Array.Empty<Func<IQueryable<Entities.User>, IQueryable<Entities.User>>>();
 
             switch (args.UserRequestType)
             {
                 case UserRequestType.Basic:
-                    var basicUsers = await _userRepository.GetListAsync(
-                        predicate: x => false,
+                    var basicUsers = _userRepository.GetThenInclude(
+                        predicate: null,
                         noTracking: false,
-                        cancellationToken,
-                        orderBy: null,
                         includes: null);
-                    return Map(basicUsers);
+                    return await Map(basicUsers, args);
 
                 case UserRequestType.Address:
                     includes = new Func<IQueryable<Entities.User>, IQueryable<Entities.User>>[]
@@ -283,20 +285,23 @@ namespace ManagementSystem.Domain.Services.Concrete.User
                     break;
             }
 
-            var users = await _userRepository.GetThenInclude(
+            var users = _userRepository.GetThenInclude(
                 predicate: null,
                 noTracking: true,
-                includes: includes).ToListAsync();
+                includes: includes);
 
-            return Map(users);
+            return await Map(users, args);
         }
 
-        private List<UserDto> Map(List<Domain.Entities.User> users)
+        private async Task<PagedViewModel<UserDto>> Map(IQueryable<Domain.Entities.User> users, GetUserArgs args)
         {
-            if (users is null || users.Count == 0)
+            if (users is null)
                 return null;
 
-            var mappedResult = _mapper.Map<List<UserDto>>(users);
+            var mappedResult = await users
+                .ProjectTo<UserDto>(_mapper.ConfigurationProvider)
+                .GetPaged(args.Page, args.PageSize);
+
             return mappedResult;
         }
         public async Task<LoginDto> LoginAsync(LoginArgs args, CancellationToken cancellationToken = default)

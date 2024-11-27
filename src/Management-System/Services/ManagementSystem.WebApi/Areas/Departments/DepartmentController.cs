@@ -26,7 +26,7 @@ namespace ManagementSystem.WebApi.Areas.Departments
         [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Craate([FromBody] CreateDepartmentCommand request, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Add([FromBody] CreateDepartmentCommand request, CancellationToken cancellationToken = default)
         {
             var result = await _mediator.Send(request);
             if (result == 0)

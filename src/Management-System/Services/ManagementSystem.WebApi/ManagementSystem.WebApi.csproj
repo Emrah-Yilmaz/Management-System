@@ -26,7 +26,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Areas\Admin\User\MappingProfile\" />
     <Folder Include="Areas\Admin\User\Models\Requests\" />
     <Folder Include="Areas\Auth\MappingProfile\" />
     <Folder Include="Areas\Auth\Models\Requests\" />

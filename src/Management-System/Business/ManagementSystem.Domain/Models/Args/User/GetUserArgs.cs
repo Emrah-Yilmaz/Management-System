@@ -1,8 +1,9 @@
-﻿using ManagementSystem.Domain.Models.Enums;
+﻿using CommonLibrary.Models.Requests;
+using ManagementSystem.Domain.Models.Enums;
 
 namespace ManagementSystem.Domain.Models.Args.User
 {
-    public class GetUserArgs
+    public class GetUserArgs : PagedRequest
     {
         public UserRequestType UserRequestType { get; set; }
     }

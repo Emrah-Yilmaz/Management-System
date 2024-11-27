@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using CommonLibrary.Features.Paginations;
 using ManagementSystem.Application.Features.Commands.User;
 using ManagementSystem.Application.Features.Queries.User;
 using ManagementSystem.WebApi.Areas.Admin.User.Models.Responses;
@@ -76,20 +77,22 @@ namespace ManagementSystem.WebApi.Areas.Admin.User
         }
 
         [HttpGet("users")]
-        [ProducesResponseType(typeof(List<UserResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(PagedViewModel<UserResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetUsers([FromQuery] GetUsersRequest request, CancellationToken cancellationToken = default)
         {
             var query = new GetUsersQuery();
             query.UserRequestType = request.UserRequestType;
+            query.Page = request.Page;
+            query.PageSize = request.PageSize;
 
             var result = await _mediator.Send(query, cancellationToken);
 
-            if (result is null || result.Count == 0)
+            if (result is null || result.Results.Count == 0)
             {
                 return NotFound();
             }
-            var mappedResponse = _mapper.Map<List<UserResponse>>(result);
+            var mappedResponse = _mapper.Map<PagedViewModel<UserResponse>>(result);
             return Ok(mappedResponse);
         }
 
