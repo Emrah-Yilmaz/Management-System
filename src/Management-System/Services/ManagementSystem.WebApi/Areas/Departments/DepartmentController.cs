@@ -16,7 +16,7 @@ namespace ManagementSystem.WebApi.Areas.Departments
     {
         private readonly IMapper _mapper;
         private readonly IMediator _mediator;
-        public DepartmentController(IMapper mapper, IMediator mediator)
+        public DepartmentController(IMapper mapper, IMediator mediator) : base(mediator)
         {
             _mapper = mapper;
             _mediator = mediator;

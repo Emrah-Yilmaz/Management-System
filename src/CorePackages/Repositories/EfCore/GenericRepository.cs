@@ -93,9 +93,9 @@ namespace Packages.Repositories.EfCore
             return await entity.FindAsync(id);
         }
 
-        public virtual async Task<TEntity> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, bool noTracking = true, CancellationToken cancellationToken = default, params Expression<Func<TEntity, object>>[] includes)
+        public virtual async Task<TEntity> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, bool isDeleted, bool noTracking = true, CancellationToken cancellationToken = default, params Expression<Func<TEntity, object>>[] includes)
         {
-            var query = StatusFiltered(entity.AsQueryable());
+            var query = StatusFiltered(entity.AsQueryable(), isDeleted);
 
             if (predicate != null)
                 query = query.Where(predicate);
@@ -135,9 +135,9 @@ namespace Packages.Repositories.EfCore
             return found;
         }
 
-        public virtual async Task<List<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> predicate, bool noTracking = false, CancellationToken cancellationToken = default, Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null, params Expression<Func<TEntity, object>>[] includes)
+        public virtual async Task<List<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> predicate, bool isDeleted, bool noTracking = false, CancellationToken cancellationToken = default, Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null, params Expression<Func<TEntity, object>>[] includes)
         {
-            IQueryable<TEntity> query = AsQueryable();
+            IQueryable<TEntity> query = AsQueryable(isDeleted);
 
             if (predicate is not null)
             {
@@ -172,9 +172,9 @@ namespace Packages.Repositories.EfCore
             return await query.ToListAsync();
         }
 
-        public virtual async Task<TEntity> SingleOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, bool noTracking = true, CancellationToken cancellationToken = default, params Expression<Func<TEntity, object>>[] includes)
+        public virtual async Task<TEntity> SingleOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, bool isDeleted, bool noTracking = true, CancellationToken cancellationToken = default, params Expression<Func<TEntity, object>>[] includes)
         {
-            var query = StatusFiltered(entity.AsQueryable());
+            var query = StatusFiltered(entity.AsQueryable(), isDeleted);
             if (predicate != null)
                 query = query.Where(predicate);
 
@@ -189,9 +189,9 @@ namespace Packages.Repositories.EfCore
 
         #endregion
 
-        public virtual IQueryable<TEntity> AsQueryable(Expression<Func<TEntity, bool>> expression)
+        public virtual IQueryable<TEntity> AsQueryable(Expression<Func<TEntity, bool>> expression, bool isDeleted)
         {
-            var query = StatusFiltered(entity.AsQueryable());
+            var query = StatusFiltered(entity.AsQueryable(), isDeleted);
             if (expression is not null)
             {
                 var filtered = query.Where(expression);
@@ -201,15 +201,15 @@ namespace Packages.Repositories.EfCore
             return query.AsQueryable();
 
         }
-        public virtual IQueryable<TEntity> AsQueryable()
+        public virtual IQueryable<TEntity> AsQueryable(bool isDeleted)
         {
-            var query = StatusFiltered(entity.AsQueryable());
+            var query = StatusFiltered(entity.AsQueryable(), isDeleted);
             return query.AsQueryable();
         }
 
-        public virtual TEntity FirstOrDefault(Expression<Func<TEntity, bool>> predicate, bool noTracking = true, params Expression<Func<TEntity, object>>[] includes)
+        public virtual TEntity FirstOrDefault(Expression<Func<TEntity, bool>> predicate, bool isDeleted, bool noTracking = true, params Expression<Func<TEntity, object>>[] includes)
         {
-            var query = StatusFiltered(entity.AsQueryable());
+            var query = StatusFiltered(entity.AsQueryable(), isDeleted);
 
             if (predicate != null)
                 query = query.Where(predicate);
@@ -222,14 +222,19 @@ namespace Packages.Repositories.EfCore
             return query.FirstOrDefault();
         }
 
-        private IQueryable<TEntity> StatusFiltered(IQueryable<TEntity> entity)
+        private IQueryable<TEntity> StatusFiltered(IQueryable<TEntity> entity, bool isDeleted)
         {
-            var filteredResult = entity.Where(e => e.Status != nameof(StatusType.Deleted));
-            return filteredResult;
+            if (isDeleted)
+            {
+                var filteredResult = entity.Where(e => e.Status != nameof(StatusType.Deleted));
+                return filteredResult;
+            }
+            
+            return entity;
         }
-        public virtual TEntity SingleOrDefault(Expression<Func<TEntity, bool>> predicate, bool noTracking = true, params Expression<Func<TEntity, object>>[] includes)
+        public virtual TEntity SingleOrDefault(Expression<Func<TEntity, bool>> predicate, bool isDeleted, bool noTracking = true, params Expression<Func<TEntity, object>>[] includes)
         {
-            var query = StatusFiltered(entity.AsQueryable());
+            var query = StatusFiltered(entity.AsQueryable(), isDeleted);
 
             if (predicate != null)
                 query = query.Where(predicate);
@@ -308,7 +313,7 @@ namespace Packages.Repositories.EfCore
 
         private IQueryable<TEntity> ApplyIncludes(IQueryable<TEntity> query, Expression<Func<TEntity, object>>[] includes)
         {
-            if (includes?.Any() == true)
+            if (includes == null || includes.Length > 0)
             {
                 foreach (var include in includes)
                 {
@@ -357,6 +362,11 @@ namespace Packages.Repositories.EfCore
             }
 
             return query;
+        }
+
+        public async Task<bool> IsExistAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+        {
+            return await this.entity.AnyAsync(predicate);
         }
     }
 }

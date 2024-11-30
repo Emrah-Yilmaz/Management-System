@@ -24,7 +24,7 @@ namespace ManagementSystem.WebApi.Extensions
             return app.Use(async (context, next) =>
             {
                 // Küçük harfe dönüştürme
-                context.Request.Path = context.Request.Path.Value.ToLower();
+                context.Request.Path = context?.Request?.Path.Value?.ToLower();
                 await next();
             });
         }

@@ -20,7 +20,7 @@ namespace ManagementSystem.WebApi.Areas.WorkTasks
         private readonly IMediator _mediator;
         private readonly IMapper _mapper;
 
-        public WorkTaskController(IMediator mediator, IMapper mapper)
+        public WorkTaskController(IMediator mediator, IMapper mapper) : base(mediator)
         {
             _mediator = mediator;
             _mapper = mapper;

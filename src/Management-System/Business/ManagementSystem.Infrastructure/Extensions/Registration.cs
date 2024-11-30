@@ -53,6 +53,7 @@ namespace ManagementSystem.Infrastructure.Extensions
             services.AddScoped<IProjectRepository, ProjectRepository>();
             services.AddScoped<IHistoryRepository, HistoryRepository>();
             services.AddScoped<IRoleRepository, RoleRepository>();
+            services.AddScoped<IProjectRepository, ProjectRepository>();
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>)); // TContext burada AppDbContext olacak
 
             return services;

@@ -14,7 +14,7 @@ namespace ManagementSystem.WebApi.Areas.Locations
     {
         private readonly IMapper _mapper;
         private readonly IMediator _mediator;
-        public LocationController(IMapper mapper, IMediator mediator)
+        public LocationController(IMapper mapper, IMediator mediator) : base(mediator)
         {
             _mapper = mapper;
             _mediator = mediator;

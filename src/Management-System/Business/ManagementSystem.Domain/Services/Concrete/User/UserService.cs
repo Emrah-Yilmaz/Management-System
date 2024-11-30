@@ -87,6 +87,7 @@ namespace ManagementSystem.Domain.Services.Concrete.User
         {
             var user = await _userRepository.FirstOrDefaultAsync(
                 predicate: u => u.Id == args.UserId,
+                isDeleted: false,
                 noTracking: false,
                 cancellationToken: default,
                 includes: p => p.Projects);
@@ -97,6 +98,7 @@ namespace ManagementSystem.Domain.Services.Concrete.User
 
             var project = await _projectRepository.FirstOrDefaultAsync(
                 predicate: p => p.Id == args.ProjectId,
+                isDeleted: false,
                 noTracking: false,
                 cancellationToken: default,
                 includes: u => u.Users);
@@ -394,6 +396,7 @@ namespace ManagementSystem.Domain.Services.Concrete.User
 
             var user = await _userRepository.FirstOrDefaultAsync(
                 predicate: u => u.Id == userId,
+                isDeleted: false,
                 noTracking: false,
                 cancellationToken: default,
                 c => c.Comments);

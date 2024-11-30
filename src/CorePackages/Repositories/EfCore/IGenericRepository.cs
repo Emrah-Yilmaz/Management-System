@@ -21,18 +21,23 @@ namespace Packages.Repositories.EfCore
         #endregion
 
         #region Queries
+        Task<bool> IsExistAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default);
         Task<TEntity> FindAsync(int id, CancellationToken cancellationToken = default);
 
         Task<List<TEntity>> GetAllAsync(bool noTracking = false, CancellationToken cancellationToken = default);
-        Task<List<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> predicate, 
-            bool noTracking = false, 
-            CancellationToken cancellationToken = default, 
-            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null, 
+        Task<List<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> predicate,
+            bool isDeleted = false,
+            bool noTracking = false,
+            CancellationToken cancellationToken = default,
+            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
             params Expression<Func<TEntity, object>>[] includes);
         Task<TEntity> GetByIdAsync(int id, bool noTracking = true, CancellationToken cancellationToken = default, params Expression<Func<TEntity, object>>[] include);
-        Task<TEntity> SingleOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, bool noTracking = true, CancellationToken cancellationToken = default, params Expression<Func<TEntity, object>>[] includes);
-        Task<TEntity> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, bool noTracking = true, CancellationToken cancellationToken = default, params Expression<Func<TEntity, object>>[] includes);
-
+        Task<TEntity> SingleOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, bool isDeleted, bool noTracking = true, CancellationToken cancellationToken = default, params Expression<Func<TEntity, object>>[] includes);
+        Task<TEntity> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate,
+            bool isDeleted,
+            bool noTracking = true,
+            CancellationToken cancellationToken = default,
+            params Expression<Func<TEntity, object>>[] includes);
         Task<List<TEntity>> SearchAsync(CancellationToken cancellationToken = default, params (Expression<Func<TEntity, string>> property, string searchTerm)[] searchTerms);
         #endregion
 
@@ -47,10 +52,10 @@ namespace Packages.Repositories.EfCore
         bool DeleteRange(Expression<Func<TEntity, bool>> predicate);
         int AddOrUpdate(TEntity entity);
         int SaveChange();
-        TEntity FirstOrDefault(Expression<Func<TEntity, bool>> predicate, bool noTracking = true, params Expression<Func<TEntity, object>>[] includes);
-        TEntity SingleOrDefault(Expression<Func<TEntity, bool>> predicate, bool noTracking = true, params Expression<Func<TEntity, object>>[] includes);
-        IQueryable<TEntity> AsQueryable(Expression<Func<TEntity, bool>> expression);
-        IQueryable<TEntity> AsQueryable();
+        TEntity FirstOrDefault(Expression<Func<TEntity, bool>> predicate, bool isDeleted, bool noTracking = true, params Expression<Func<TEntity, object>>[] includes);
+        TEntity SingleOrDefault(Expression<Func<TEntity, bool>> predicate, bool isDeleted, bool noTracking = true, params Expression<Func<TEntity, object>>[] includes);
+        IQueryable<TEntity> AsQueryable(Expression<Func<TEntity, bool>> expression, bool isDeleted);
+        IQueryable<TEntity> AsQueryable(bool isDeleted);
         IQueryable<TEntity> GetThenInclude(
             Expression<Func<TEntity, bool>> predicate,
             bool noTracking = true,

@@ -26,6 +26,7 @@ namespace ManagementSystem.Domain.Services.Concrete.Comment
         {
             var entity = _repository.SingleOrDefaultAsync(
                 predicate: p => p.Id == id && p.Status != StatusType.Deleted.ToString(),
+                isDeleted: false,
                 noTracking: false);
 
             return entity.Result;
@@ -103,6 +104,7 @@ namespace ManagementSystem.Domain.Services.Concrete.Comment
         {
             var entity = await _repository.FirstOrDefaultAsync(
                 predicate: c => c.Id == args.CommentId,
+                isDeleted: false,
                 noTracking: false,
                 cancellationToken: default,
                 includes: null

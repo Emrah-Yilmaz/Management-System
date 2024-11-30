@@ -15,7 +15,7 @@ namespace ManagementSystem.WebApi.Areas.Comments
         private readonly IMediator _mediator;
         private readonly IMapper _mapper;
 
-        public CommentController(IMediator mediator, IMapper mapper)
+        public CommentController(IMediator mediator, IMapper mapper) : base(mediator)
         {
             _mediator = mediator;
             _mapper = mapper;

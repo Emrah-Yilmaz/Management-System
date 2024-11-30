@@ -1,6 +1,7 @@
 ﻿using ManagementSystem.Domain.Models;
 using ManagementSystem.Domain.Utilities;
 using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace ManagementSystem.Domain.TokenHandler
 {
@@ -22,7 +23,7 @@ namespace ManagementSystem.Domain.TokenHandler
                 LastName = _httpContextAccessor?.HttpContext?.User?.Claims?.FirstOrDefault(p => p.Type == Shared.JwtClaims.LastName)?.Value ?? Shared.JwtClaims.Unknown,
                 UserName = _httpContextAccessor?.HttpContext?.User?.Claims?.FirstOrDefault(p => p.Type == Shared.JwtClaims.UserName)?.Value ?? Shared.JwtClaims.Unknown,
                 Email = _httpContextAccessor?.HttpContext?.User?.Claims?.FirstOrDefault(p => p.Type == Shared.JwtClaims.Email)?.Value ?? Shared.JwtClaims.Unknown,
-                Roles = _httpContextAccessor?.HttpContext?.User?.Claims?.Where(p => p.Type == Shared.JwtClaims.Role)?.Select(p => p?.Value).ToList()
+                Roles = _httpContextAccessor?.HttpContext?.User?.Claims?.Where(p => p.Type == ClaimTypes.Role)?.Select(p => p?.Value).ToList()
             };
 
             return model;

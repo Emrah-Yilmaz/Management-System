@@ -13,8 +13,6 @@ namespace Packages.Exceptions.Middlewares
         private readonly IHttpContextAccessor _contextAccessor;
         private readonly LoggerServiceBase _loggerService;
 
-
-
         public ExceptionMiddleware(RequestDelegate next, IHttpContextAccessor contextAccessor, LoggerServiceBase loggerService)
         {
             _httpExceptionHandler = new HttpExpcetionHandler();

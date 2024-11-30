@@ -1,5 +1,4 @@
 ﻿using ManagementSystem.Domain.Models.Enums;
-using Microsoft.AspNetCore.Mvc;
 
 namespace ManagementSystem.Domain.Models.Args.User
 {
@@ -7,5 +6,6 @@ namespace ManagementSystem.Domain.Models.Args.User
     {
         public int Id { get; set; }
         public StatusType Status { get; set; }
+        public ModulesType ModulesType { get; set; }
     }
 }

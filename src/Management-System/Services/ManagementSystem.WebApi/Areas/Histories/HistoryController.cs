@@ -14,9 +14,9 @@ namespace ManagementSystem.WebApi.Areas.Histories
         private readonly IMediator _meditor;
         private readonly IMapper _mapper;
 
-        public HistoryController(IMediator meditor, IMapper mapper)
+        public HistoryController(IMediator mediator, IMapper mapper) : base(mediator)
         {
-            _meditor = meditor;
+            _meditor = mediator;
             _mapper = mapper;
         }
 

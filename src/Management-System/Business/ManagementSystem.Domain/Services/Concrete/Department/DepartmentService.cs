@@ -37,7 +37,7 @@ namespace ManagementSystem.Domain.Services.Concrete.Department
 
         public async Task<DepartmentDto> GetDepartment(GetByIdArgs args, CancellationToken cancellationToken = default)
         {
-            var result = await _repository.SingleOrDefaultAsync(p => p.Id == args.Id);
+            var result = await _repository.SingleOrDefaultAsync(p => p.Id == args.Id, isDeleted: false);
             if (result is null)
             {
                 return null;
@@ -49,7 +49,7 @@ namespace ManagementSystem.Domain.Services.Concrete.Department
 
         public async Task<PagedViewModel<DepartmentDto>?> GetDepartments(GetDepartmentsArgs args, CancellationToken cancellationToken = default)
         {
-            var query = (args.Name is null) ?  _repository.AsQueryable() : _repository.AsQueryable(p => p.Name.Contains(args.Name));
+            var query = (args.Name is null) ?  _repository.AsQueryable(isDeleted: false) : _repository.AsQueryable(p => p.Name.Contains(args.Name), isDeleted: false);
 
             var departments = await query
                 .ProjectTo<DepartmentDto>(_mapper.ConfigurationProvider)
@@ -67,6 +67,7 @@ namespace ManagementSystem.Domain.Services.Concrete.Department
         {
             var result = await _repository.SingleOrDefaultAsync(
                 predicate: p => p.Id == args.Id,
+                isDeleted: false,
                 noTracking: true,
                 cancellationToken: default,
                 includes: p => p.Projects);
