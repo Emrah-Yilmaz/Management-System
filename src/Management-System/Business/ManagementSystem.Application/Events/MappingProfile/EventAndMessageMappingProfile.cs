@@ -8,7 +8,7 @@ namespace ManagementSystem.Application.Events.MappingProfile
     {
         public EventAndMessageMappingProfile()
         {
-            CreateMap<SendEmailEvent, CreatedDepartmentMessage>().ReverseMap();
+            CreateMap<SendEmailEvent, SendEmailMessage>().ReverseMap();
         }
     }
 }

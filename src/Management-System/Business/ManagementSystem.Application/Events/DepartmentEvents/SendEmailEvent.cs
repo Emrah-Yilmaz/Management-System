@@ -3,7 +3,7 @@ using MediatR;
 
 namespace ManagementSystem.Application.Events.DepartmentEvents
 {
-    public class SendEmailEvent : CreatedDepartmentMessage, INotification
+    public class SendEmailEvent : SendEmailMessage, INotification
     {
     }
 }

@@ -18,7 +18,7 @@ namespace ManagementSystem.Application.Events.DepartmentEvents
 
         public async Task Handle(SendEmailEvent notification, CancellationToken cancellationToken)
         {
-            var mappedMessage = _mapper.Map<CreatedDepartmentMessage>(notification);
+            var mappedMessage = _mapper.Map<SendEmailMessage>(notification);
             await _busControl.Publish(mappedMessage, cancellationToken);
         }
     }
