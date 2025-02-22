@@ -32,16 +32,8 @@
             };
 
             mailMessage.To.Add(toEmail);
-            try
-            {
-                await smtpClient.SendMailAsync(mailMessage);
 
-            }
-            catch (Exception ex)
-            {
-
-                throw;
-            }
+            await smtpClient.SendMailAsync(mailMessage);
         }
     }
 

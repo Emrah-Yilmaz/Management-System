@@ -1,0 +1,114 @@
+﻿@page "/login"
+@using System.ComponentModel.DataAnnotations
+@inject NavigationManager Navigation
+@inject IAuthenticationService AuthenticationService
+@inject IToastService ToastService
+
+<div class="login-page">
+    <EditForm Model="@loginModel" OnValidSubmit="HandleLoginAsync">
+        <DataAnnotationsValidator />
+
+        <div class="login-container">
+            <div class="login-box">
+                <h2>Giriş Yap</h2>
+                
+                @if (isLoading)
+                {
+                    <div class="loading-spinner">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Yükleniyor...</span>
+                        </div>
+                    </div>
+                }
+
+                <div class="form-group mb-3">
+                    <label for="username">Kullanıcı Adı</label>
+                    <InputText id="username" class="form-control" @bind-Value="loginModel.Username" disabled="@isLoading" />
+                    <ValidationMessage For="@(() => loginModel.Username)" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="password">Şifre</label>
+                    <div class="input-group">
+                        <InputText id="password" 
+                                 type="@(showPassword ? "text" : "password")" 
+                                 class="form-control" 
+                                 @bind-Value="loginModel.Password" 
+                                 disabled="@isLoading" />
+                        <button type="button" class="btn btn-outline-secondary" @onclick="TogglePasswordVisibility">
+                            <i class="@(showPassword ? "fas fa-eye-slash" : "fas fa-eye")"></i>
+                        </button>
+                    </div>
+                    <ValidationMessage For="@(() => loginModel.Password)" />
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block w-100 mb-3" disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <span>Giriş yapılıyor...</span>
+                    }
+                    else
+                    {
+                        <span>Giriş Yap</span>
+                    }
+                </button>
+
+                <div class="additional-options">
+                    <a href="/forgot-password" class="text-decoration-none">Şifremi Unuttum</a>
+                    <a href="/register" class="text-decoration-none">Kayıt Ol</a>
+                </div>
+            </div>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private LoginModel loginModel = new LoginModel();
+    private bool isLoading = false;
+    private bool showPassword = false;
+
+    private async Task HandleLoginAsync()
+    {
+        try
+        {
+            isLoading = true;
+            // Burada gerçek kimlik doğrulama mantığını implement edin
+            await Task.Delay(1000); // Simüle edilmiş API çağrısı
+            
+            // var result = await AuthenticationService.LoginAsync(loginModel.Username, loginModel.Password);
+            // if (result.Succeeded)
+            // {
+                ToastService.ShowSuccess("Başarıyla giriş yapıldı!");
+                Navigation.NavigateTo("/");
+            // }
+            // else
+            // {
+            //     ToastService.ShowError("Giriş başarısız. Lütfen bilgilerinizi kontrol edin.");
+            // }
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError("Bir hata oluştu: " + ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void TogglePasswordVisibility()
+    {
+        showPassword = !showPassword;
+    }
+
+    public class LoginModel
+    {
+        [Required(ErrorMessage = "Kullanıcı adı zorunludur")]
+        [StringLength(50, MinimumLength = 3, ErrorMessage = "Kullanıcı adı en az 3 karakter olmalıdır")]
+        public string Username { get; set; }
+
+        [Required(ErrorMessage = "Şifre zorunludur")]
+        [StringLength(100, MinimumLength = 6, ErrorMessage = "Şifre en az 6 karakter olmalıdır")]
+        public string Password { get; set; }
+    }
+}

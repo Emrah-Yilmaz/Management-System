@@ -26,11 +26,12 @@ namespace ManagementSystem.Application.Features.Commands.Department
             var @eventCreateDepartment = new SendEmailEvent()
             {
                 Id = result,
-                DepartmentName = request.Name,
+                Title = request.Name,
                 CreatedOn = DateTime.Now,
                 CreatedBy = $"{_domainPrincipal.GetClaims().Name} {_domainPrincipal.GetClaims().LastName}",
                 Subject = "Departman Oluşturuldu",
-                To = MailTemplate.Admin
+                To = MailTemplate.Admin,
+                ModulesType = CommonLibrary.Models.Enums.ModulesType.Department
             };
 
             await _mediator.Publish(eventCreateDepartment, cancellationToken);
