@@ -2,7 +2,6 @@
 using CommonLibrary.Templates.Mail;
 using ManagementSystem.Notification.Services;
 using MassTransit;
-using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace ManagementSystem.Notification.Consumers.EmailConsumers
 {
@@ -15,11 +14,10 @@ namespace ManagementSystem.Notification.Consumers.EmailConsumers
             _emailService = emailService;
         }
 
-        public Task Consume(ConsumeContext<SendEmailMessage> context)
+        public async Task Consume(ConsumeContext<SendEmailMessage> context)
         {
             var template = string.Format(MailTemplate.CreatedDepartment, context.Message.CreatedOn, context.Message.CreatedBy, context.Message.Id, context.Message.Title);
-            _emailService.SendEmailAsync(context.Message.To, context.Message.Subject, template);
-            return Task.CompletedTask;
+            await _emailService.SendEmailAsync(context.Message.To, context.Message.Subject, template);
         }
     }
 }
