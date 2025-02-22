@@ -1,4 +1,4 @@
-﻿namespace ManagementSystem.WebApi.Areas.Base.Models
+﻿namespace ManagementSystem.WebApi.Areas.Base.Models.Responses
 {
     public class BaseResponse
     {

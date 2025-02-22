@@ -1,4 +1,4 @@
-﻿using ManagementSystem.WebApi.Areas.Base.Models;
+﻿using ManagementSystem.WebApi.Areas.Base.Models.Responses;
 
 namespace ManagementSystem.WebApi.Areas.Comments.Models.Responses
 {
