@@ -8,14 +8,14 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ManagementSystem.WebApi.Areas.Admin.Project
 {
-    [Route("api/[controller]")]
+    [Route("api/admin/project")]
     [ApiController]
-    public class AdminProjectController : ControllerBase
+    public class ProjectController : ControllerBase
     {
         private readonly IMediator _mediator;
         private readonly IMapper _mapper;
 
-        public AdminProjectController(IMediator mediator, IMapper mapper)
+        public ProjectController(IMediator mediator, IMapper mapper)
         {
             _mediator = mediator;
             _mapper = mapper;

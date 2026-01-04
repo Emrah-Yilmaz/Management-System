@@ -11,6 +11,7 @@ namespace ManagementSystem.WebApi.Areas.Admin.User.MappingProfile
         {
             CreateMap<PagedViewModel<UserResponse>, PagedViewModel<UserDto>>().ReverseMap();
             CreateMap<UserDto, GetUserBasicResponse>();
+            CreateMap<UserDto, UserResponse>();
         }
     }
 }

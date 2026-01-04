@@ -2,6 +2,7 @@
 using CommonLibrary.Features.Paginations;
 using ManagementSystem.Application.Features.Commands.User;
 using ManagementSystem.Application.Features.Queries.User;
+using ManagementSystem.WebApi.Areas.Admin.User.Models.Requests;
 using ManagementSystem.WebApi.Areas.Admin.User.Models.Responses;
 using ManagementSystem.WebApi.Areas.Users.Models.Requests;
 using MediatR;
@@ -10,14 +11,14 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ManagementSystem.WebApi.Areas.Admin.User
 {
-    [Route("api/[controller]")]
+    [Route("api/admin/user")]
     [ApiController]
-    public class AdminUserController : ControllerBase
+    public class UserController : ControllerBase
     {
         private readonly IMediator _mediator;
         private readonly IMapper _mapper;
 
-        public AdminUserController(IMediator mediator, IMapper mapper)
+        public UserController(IMediator mediator, IMapper mapper)
         {
             _mediator = mediator;
             _mapper = mapper;
@@ -85,6 +86,10 @@ namespace ManagementSystem.WebApi.Areas.Admin.User
             query.UserRequestType = request.UserRequestType;
             query.Page = request.Page;
             query.PageSize = request.PageSize;
+            query.Name = request.Name;
+            query.UserName = request.UserName;
+            query.Email = request.Email;
+            query.DepartmentId = request.DepartmentId;
 
             var result = await _mediator.Send(query, cancellationToken);
 

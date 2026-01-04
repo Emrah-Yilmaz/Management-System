@@ -6,14 +6,14 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ManagementSystem.WebApi.Areas.Admin.Departments
 {
-    [Route("api/[controller]")]
+    [Route("api/admin/department")]
     [ApiController]
-    public class AdminDepartmentController : ControllerBase
+    public class DepartmentController : ControllerBase
     {
         private readonly IMediator _mediator;
         private readonly IMapper _mapper;
 
-        public AdminDepartmentController(IMediator mediator, IMapper mapper)
+        public DepartmentController(IMediator mediator, IMapper mapper)
         {
             _mediator = mediator;
             _mapper = mapper;

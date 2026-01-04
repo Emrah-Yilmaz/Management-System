@@ -8,6 +8,8 @@
         Completd = 4,
         Declined = 5,
         Deleted = 6,
-        New = 7
+        New = 7,
+        Expired = 8,
+        InProcess = 9
     }
 }

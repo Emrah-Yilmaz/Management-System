@@ -275,42 +275,67 @@ namespace ManagementSystem.Domain.Services.Concrete.User
         public async Task<PagedViewModel<UserDto>> GetUsers(GetUserArgs args, CancellationToken cancellationToken = default)
         {
             Func<IQueryable<Entities.User>, IQueryable<Entities.User>>[] includes = Array.Empty<Func<IQueryable<Entities.User>, IQueryable<Entities.User>>>();
+            bool noTracking = true;
 
             switch (args.UserRequestType)
             {
                 case UserRequestType.Basic:
-                    var basicUsers = _userRepository.GetThenInclude(
-                        predicate: null,
-                        noTracking: false,
-                        includes: null);
-                    return await Map(basicUsers, args);
+                    // Basic isteklerde noTracking = false olarak belirlenmişti
+                    noTracking = false;
+                    includes = null;
+                    break;
 
                 case UserRequestType.Address:
                     includes = new Func<IQueryable<Entities.User>, IQueryable<Entities.User>>[]
                     {
-                        q => q.Include(u => u.Addresses), // User'dan Addresses'e geçiş
-                        q => q.Include(u => u.Addresses).ThenInclude(a => a.City),// Address'ten City'e geçiş
-                        q => q.Include(u => u.Addresses).ThenInclude(a => a.District), // Address'ten City'e geçiş
-                        q => q.Include(u => u.Addresses).ThenInclude(a => a.Quarter) // Address'ten City'e geçiş
+                q => q.Include(u => u.Addresses),
+                q => q.Include(u => u.Addresses).ThenInclude(a => a.City),
+                q => q.Include(u => u.Addresses).ThenInclude(a => a.District),
+                q => q.Include(u => u.Addresses).ThenInclude(a => a.Quarter)
                     };
                     break;
 
                 default:
                     includes = new Func<IQueryable<Entities.User>, IQueryable<Entities.User>>[]
                     {
-                        q => q.Include(u => u.Department).ThenInclude(d => d.Projects),
-                        q => q.Include(u => u.Addresses), // User'dan Addresses'e geçiş
-                        q => q.Include(u => u.Addresses).ThenInclude(a => a.City),// Address'ten City'e geçiş
-                        q => q.Include(u => u.Addresses).ThenInclude(a => a.District), // Address'ten City'e geçiş
-                        q => q.Include(u => u.Addresses).ThenInclude(a => a.Quarter) // Address'ten City'e geçiş
+                q => q.Include(u => u.Department).ThenInclude(d => d.Projects),
+                q => q.Include(u => u.Addresses),
+                q => q.Include(u => u.Addresses).ThenInclude(a => a.City),
+                q => q.Include(u => u.Addresses).ThenInclude(a => a.District),
+                q => q.Include(u => u.Addresses).ThenInclude(a => a.Quarter)
                     };
                     break;
             }
 
+            // Repository'den IQueryable al
             var users = _userRepository.GetThenInclude(
                 predicate: null,
-                noTracking: true,
+                noTracking: noTracking,
                 includes: includes);
+
+            // Filtreleri uygula (varsa). EF uyumlu olması için ToLower ile küçükharf-normalizasyonu yapıldı.
+            if (!string.IsNullOrWhiteSpace(args.Name))
+            {
+                var lower = args.Name.ToLower();
+                users = users.Where(u => u.Name != null && u.Name.ToLower().Contains(lower));
+            }
+
+            if (!string.IsNullOrWhiteSpace(args.UserName))
+            {
+                var lower = args.UserName.ToLower();
+                users = users.Where(u => u.UserName != null && u.UserName.ToLower().Contains(lower));
+            }
+
+            if (!string.IsNullOrWhiteSpace(args.Email))
+            {
+                var lower = args.Email.ToLower();
+                users = users.Where(u => u.Email != null && u.Email.ToLower().Contains(lower));
+            }
+
+            if (args.DepartmentId.HasValue)
+            {
+                users = users.Where(u => u.DepartmentId == args.DepartmentId.Value);
+            }
 
             return await Map(users, args);
         }
@@ -491,6 +516,38 @@ namespace ManagementSystem.Domain.Services.Concrete.User
             var users = await _userRepository.GetAllAsync(noTracking: true, cancellationToken);
             var result = _mapper.Map<List<UserDto>>(users);
             return result;
+        }
+
+        public async Task<IList<UserDto>> SearchAsync(SearchUsersArgs args, CancellationToken cancellationToken = default)
+        {
+            // Only include search terms if they are not null or empty
+            var searchTerms = new List<(System.Linq.Expressions.Expression<Func<Domain.Entities.User, string>> property, string searchTerm)>();
+
+            if (!string.IsNullOrEmpty(args.Name))
+            {
+                searchTerms.Add((u => u.Name, args.Name));
+            }
+            if (!string.IsNullOrEmpty(args.UserName))
+            {
+                searchTerms.Add((u => u.UserName, args.UserName));
+            }
+
+            // DepartmentId is int?, but SearchAsync expects string properties.
+            // If you want to search by DepartmentId, you need a different overload or a different method.
+            // If you want to filter by DepartmentId, do it after the search.
+            var results = await _userRepository.SearchAsync(
+                cancellationToken,
+                searchTerms.ToArray()
+            );
+
+            // Now filter by DepartmentId if provided
+            if (args.DepartmentId.HasValue)
+            {
+                results = results.Where(u => u.DepartmentId == args.DepartmentId.Value).ToList();
+            }
+
+            // Map to UserDto and return
+            return _mapper.Map<IList<UserDto>>(results);
         }
     }
 }
