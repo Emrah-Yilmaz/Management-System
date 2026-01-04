@@ -91,4 +91,11 @@ public class ProjectService : IProjectService
 
         return projects;
     }
+
+    public async Task<List<ProjectDto>> GetProjectsBasicAsync(CancellationToken cancellationToken = default)
+    {
+        var projects = await _repository.GetAllAsync(noTracking: true, cancellationToken);
+        var result = _mapper.Map<List<ProjectDto>>(projects);
+        return result;
+    }
 }

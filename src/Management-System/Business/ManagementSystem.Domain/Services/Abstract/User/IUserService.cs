@@ -21,5 +21,6 @@ namespace ManagementSystem.Domain.Services.Abstract.User
         Task<UserDto> GetUserRoles(GetByIdArgs args, CancellationToken cancellationToken = default);
         Task<bool> AssignRoleAsync(AssignRoleArgs args, CancellationToken cancellationToken = default);
 
+        Task<List<UserDto>> GetUsersBasicAsync(CancellationToken cancellationToken = default);
     }
 }

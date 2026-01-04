@@ -111,5 +111,20 @@ namespace ManagementSystem.WebApi.Areas.Admin.User
             var mappedResponse = _mapper.Map<UserResponse>(result);
             return Ok(mappedResponse);
         }
+
+        [HttpGet("users/basic")]
+        [ProducesResponseType(typeof(GetUserBasicResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetUsersBasicAsync(CancellationToken cancellationToken = default)
+        {
+            var query = new GetUsersBasicQuery();
+            var result = await _mediator.Send(query, cancellationToken);
+            if (result is null || result.Count == 0)
+            {
+                return NotFound();
+            }
+            var mappedResponse = _mapper.Map<List<GetUserBasicResponse>>(result);
+            return Ok(mappedResponse);
+        }
     }
 }

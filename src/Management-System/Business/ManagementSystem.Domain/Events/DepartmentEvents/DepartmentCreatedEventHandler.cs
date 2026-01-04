@@ -3,20 +3,20 @@ using CommonLibrary.Messages;
 using MassTransit;
 using MediatR;
 
-namespace ManagementSystem.Application.Events.DepartmentEvents
+namespace ManagementSystem.Domain.Events.DepartmentEvents
 {
-    public class SendEmailEventHandler : INotificationHandler<SendEmailEvent>
+    public class DepartmentCreatedEventHandler : INotificationHandler<DepartmentCreated>
     {
         private readonly IBusControl _busControl;
         private readonly IMapper _mapper;
 
-        public SendEmailEventHandler(IBusControl busControl, IMapper mapper)
+        public DepartmentCreatedEventHandler(IBusControl busControl, IMapper mapper)
         {
             _busControl = busControl;
             _mapper = mapper;
         }
 
-        public async Task Handle(SendEmailEvent notification, CancellationToken cancellationToken)
+        public async Task Handle(DepartmentCreated notification, CancellationToken cancellationToken)
         {
             var mappedMessage = _mapper.Map<SendEmailMessage>(notification);
             await _busControl.Publish(mappedMessage, cancellationToken);

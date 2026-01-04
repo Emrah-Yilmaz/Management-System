@@ -46,6 +46,5 @@ namespace Packages.Exceptions.Handlers
             string details = new BusinessProblemDetails(businessException.Message).AsJson();
             return Response.WriteAsync(details);
         }
-
     }
 }

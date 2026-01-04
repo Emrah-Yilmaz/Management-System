@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using CommonLibrary.Features.Paginations;
+using CommonLibrary.Messages;
 using ManagementSystem.Domain.Entities;
+using ManagementSystem.Domain.Events.UserEvents;
 using ManagementSystem.Domain.Models.Args.User;
 using ManagementSystem.Domain.Models.Dto;
 
@@ -26,6 +28,7 @@ namespace ManagementSystem.Domain.MappingProfile.User
             CreateMap<Domain.Entities.Project, ProjectDto>();
             CreateMap<CreateUserArgs, Domain.Entities.User>();
             CreateMap<Role, RoleDto>();
+            CreateMap<UserCreated, SendEmailMessage>();
         }
     }
 }

@@ -13,9 +13,9 @@ namespace ManagementSystem.Application.Features.Queries.User
             _userService = userService;
         }
 
-        public Task<UserDto> Handle(GetUserQuery request, CancellationToken cancellationToken)
+        public async Task<UserDto> Handle(GetUserQuery request, CancellationToken cancellationToken)
         {
-            return _userService.GetUser(request.UserId, cancellationToken);
+            return await _userService.GetUser(request.UserId, cancellationToken);
         }
     }
 }

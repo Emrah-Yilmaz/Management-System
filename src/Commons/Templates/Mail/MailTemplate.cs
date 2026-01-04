@@ -8,7 +8,12 @@
         "<p>Departman Id: <strong>{2}</strong></p>" +
         "<p>Departman Adı: <strong>{3}</strong></p>" +
         "<p>Saygılarımızla,<br/>Ekibiniz</p>";
-        public static readonly string Admin = "emrahyilmaz57@outlook.com.tr";
 
+        public static readonly string ActivationEmail = "<p>Merhaba {0},</p>" +
+        "<p>Hesabınızı aktifleştirmek için lütfen aşağıdaki bağlantıya tıklayın:</p>" +
+        "<p><a href='{1}'>Hesabı Aktifleştir</a></p>" +
+        "<p>Saygılarımızla,<br/>Ekibiniz</p>";
+
+        public static readonly string Admin = "emrahyilmaz57@outlook.com.tr";
     }
 }

@@ -4,7 +4,9 @@ using Bogus;
 using CommonLibrary.Extensions;
 using CommonLibrary.Features.Paginations;
 using CommonLibrary.Models.Args;
+using CommonLibrary.Templates.Mail;
 using ManagementSystem.Domain.Entities;
+using ManagementSystem.Domain.Events.UserEvents;
 using ManagementSystem.Domain.Models.Args.User;
 using ManagementSystem.Domain.Models.Dto;
 using ManagementSystem.Domain.Models.Enums;
@@ -18,6 +20,7 @@ using ManagementSystem.Domain.Persistence.WorkTask;
 using ManagementSystem.Domain.Services.Abstract.User;
 using ManagementSystem.Domain.TokenHandler;
 using ManagementSystem.Domain.Utilities;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -25,9 +28,7 @@ using Packages.Exceptions.Types;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System.Text.Json;
 using static ManagementSystem.Domain.Utilities.Shared;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ManagementSystem.Domain.Services.Concrete.User
 {
@@ -41,6 +42,8 @@ namespace ManagementSystem.Domain.Services.Concrete.User
         private readonly IAddressRepository _addressRepository;
         private readonly IWorkTaskRepository _workTaskRepository;
         private readonly IRoleRepository _roleRepository;
+        private readonly IMediator _mediator;
+        private readonly IDomainPrincipal _domainPrincipal;
 
         public UserService(IUserRepository userRepository,
             IConfiguration configuration,
@@ -49,7 +52,9 @@ namespace ManagementSystem.Domain.Services.Concrete.User
             IProjectRepository projectRepository,
             IAddressRepository addressRepository,
             IWorkTaskRepository workTaskRepository,
-            IRoleRepository roleRepository)
+            IRoleRepository roleRepository,
+            IMediator mediator,
+            IDomainPrincipal domainPrincipal)
         {
             _userRepository = userRepository;
             _configuration = configuration;
@@ -59,6 +64,8 @@ namespace ManagementSystem.Domain.Services.Concrete.User
             _addressRepository = addressRepository;
             _workTaskRepository = workTaskRepository;
             _roleRepository = roleRepository;
+            _mediator = mediator;
+            _domainPrincipal = domainPrincipal;
         }
 
         public async Task<bool> AddUserToDepartment(AddUserToDepartmentArgs args, CancellationToken cancellationToken = default)
@@ -131,16 +138,29 @@ namespace ManagementSystem.Domain.Services.Concrete.User
 
         public async Task<int> CreateAsync(CreateUserArgs args, CancellationToken cancellationToken = default)
         {
-            var entity = _mapper.Map<Domain.Entities.User>(args);
+            var entity = _mapper.Map<Entities.User>(args);
             var hashedPass = Encrypt.Encript(args.PasswordHash);
             entity.PasswordHash = hashedPass;
             entity.Status = StatusType.Pending.ToString();
             var result = await _userRepository.AddAsync(entity, cancellationToken);
 
-            //Todo
-            //RabbitMQ implementasyonu sonrasında Doğrulama maili gönderilecek
+            //var activationLink = $"https://yourdomain.com/activate?userId={result}&token={args.ActivationToken}";
 
-            return result;
+            var emailBody = string.Format(MailTemplate.ActivationEmail, args.Name, string.Empty);
+
+            var sendEmailEvent = new UserCreated
+            {
+                Id = result,
+                Title = "Kullanıcı Aktivasyonu",
+                CreatedOn = DateTime.Now,
+                CreatedBy = $"{_domainPrincipal.GetClaims().Name} {_domainPrincipal.GetClaims().LastName}",
+                Subject = "Hesap Aktivasyonu",
+                To = args.Email,
+                Body = emailBody,
+                ModulesType = CommonLibrary.Models.Enums.ModulesType.User
+            };
+
+            await _mediator.Publish(sendEmailEvent, cancellationToken); return result;
         }
 
         public async Task<bool> CreateUserAddressAsync(CreateAddressArgs args, CancellationToken cancellationToken = default)
@@ -464,6 +484,13 @@ namespace ManagementSystem.Domain.Services.Concrete.User
             user.Roles.Add(role);
 
             return await _userRepository.UpdateAsync(user, cancellationToken) > 0 ; 
+        }
+
+        public async Task<List<UserDto>> GetUsersBasicAsync(CancellationToken cancellationToken = default)
+        {
+            var users = await _userRepository.GetAllAsync(noTracking: true, cancellationToken);
+            var result = _mapper.Map<List<UserDto>>(users);
+            return result;
         }
     }
 }

@@ -10,6 +10,7 @@ namespace CommonLibrary.Messages
         public string CreatedBy { get; set; }
         public string To { get; set; }
         public string Subject { get; set; }
+        public string Body { get; set; }
         public ModulesType ModulesType { get; set; }
     }
 }
