@@ -76,9 +76,9 @@ namespace ManagementSystem.Domain.Services.Concrete.WorkTask
                 result = result.Where(t => t.Department.Name.Contains(args.Department, StringComparison.CurrentCultureIgnoreCase)).ToList();
             }
 
-            if (!string.IsNullOrEmpty(args.Status))
+            if (args.Status.HasValue)
             {
-                result = result.Where(t => t.Status.Contains(args.Status, StringComparison.CurrentCultureIgnoreCase)).ToList();
+                result = result.Where(t => t.Status.Contains(args.Status.ToString(), StringComparison.CurrentCultureIgnoreCase)).ToList();
             }
 
             if (args.Deadline.HasValue)
