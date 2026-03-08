@@ -1,4 +1,4 @@
-﻿using Packages.Repositories.EfCore.Entity;
+using Packages.Repositories.EfCore.Entity;
 
 namespace ManagementSystem.Domain.Entities
 {
@@ -10,6 +10,7 @@ namespace ManagementSystem.Domain.Entities
         public int AssignedUserId { get; set; }
         public virtual User? AssignedUser { get; set; }
         public virtual ICollection<Comment>? Comments { get; set; }
+        public virtual ICollection<TaskAttachment>? Attachments { get; set; }
         public int DepartmentId { get; set; }
         public virtual Department Department { get; set; }
         public int ProjectId { get; set; }

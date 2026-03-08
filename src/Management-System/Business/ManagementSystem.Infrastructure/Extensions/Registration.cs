@@ -57,6 +57,7 @@ namespace ManagementSystem.Infrastructure.Extensions
             services.AddScoped<IRoleRepository, RoleRepository>();
             services.AddScoped<IProjectRepository, ProjectRepository>();
             services.AddScoped<INotificationRepository, NotificationRepository>();
+            services.AddScoped<ManagementSystem.Domain.Persistence.Attachment.ITaskAttachmentRepository, ManagementSystem.Infrastructure.Persistence.Attachment.TaskAttachmentRepository>();
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>)); // TContext burada AppDbContext olacak
 
             return services;

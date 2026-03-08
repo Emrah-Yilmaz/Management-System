@@ -2,6 +2,7 @@ using CommonLibrary.Options;
 using FluentValidation.AspNetCore;
 using ManagementSystem.Application.Extensions;
 using ManagementSystem.Domain.Extensions;
+using ManagementSystem.Domain.Configurations;
 using ManagementSystem.Infrastructure.Extensions;
 using ManagementSystem.WebApi.Configurations.Swagger;
 using ManagementSystem.WebApi.Extensions;
@@ -27,6 +28,7 @@ builder.Services.AddControllers()
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 
 builder.Services.Configure<LocationOptions>(builder.Configuration.GetSection("LocationOptions"));
+builder.Services.Configure<FileUploadSettings>(builder.Configuration.GetSection("FileUploadSettings"));
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddApplicationRegistration();

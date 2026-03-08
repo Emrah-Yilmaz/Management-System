@@ -32,6 +32,8 @@ namespace ManagementSystem.Domain.Extensions
             services.AddScoped<IHistoryService, HistoryService>();
             services.AddScoped<IProjectService, ProjectService>();
             services.AddScoped<INotificationService, NotificationService>();
+            services.AddScoped<ManagementSystem.Domain.Services.Abstract.Attachment.ITaskAttachmentService, ManagementSystem.Domain.Services.Concrete.Attachment.TaskAttachmentService>();
+            services.AddScoped<ManagementSystem.Domain.Services.Abstract.Attachment.IFileUploadService, ManagementSystem.Domain.Services.Concrete.Attachment.FileUploadService>();
 
             return services;
         }

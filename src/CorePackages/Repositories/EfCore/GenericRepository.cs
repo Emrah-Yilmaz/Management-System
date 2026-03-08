@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Packages.Repositories.EfCore.Entity;
 using Packages.Repositories.Enums;
 using System.Linq.Expressions;
@@ -313,7 +313,7 @@ namespace Packages.Repositories.EfCore
 
         private IQueryable<TEntity> ApplyIncludes(IQueryable<TEntity> query, Expression<Func<TEntity, object>>[] includes)
         {
-            if (includes == null || includes.Length > 0)
+            if (includes != null && includes.Length > 0)
             {
                 foreach (var include in includes)
                 {

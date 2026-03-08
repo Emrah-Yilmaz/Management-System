@@ -38,6 +38,7 @@ namespace ManagementSystem.Infrastructure.Context
         public DbSet<Quarter> Quarters { get; set; }
         public DbSet<StatusChangeLog> StatusChangeLogs { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<TaskAttachment> TaskAttachments { get; set; }
 
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -88,6 +89,12 @@ namespace ManagementSystem.Infrastructure.Context
                 .HasMany(wt => wt.Comments)
                 .WithOne(c => c.Task)
                 .HasForeignKey(c => c.TaskId);
+
+            modelBuilder.Entity<WorkTask>()
+                .HasMany(wt => wt.Attachments)
+                .WithOne(a => a.WorkTask)
+                .HasForeignKey(a => a.WorkTaskId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<WorkTask>()
                 .HasOne(p => p.Project)
