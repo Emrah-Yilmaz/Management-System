@@ -1,5 +1,5 @@
 ﻿using CommonLibrary.Templates.Mail;
-using ManagementSystem.Application.Events.DepartmentEvents;
+using ManagementSystem.Domain.Events.DepartmentEvents;
 using ManagementSystem.Domain.Services.Abstract.Department;
 using ManagementSystem.Domain.TokenHandler;
 using MediatR;
@@ -23,7 +23,7 @@ namespace ManagementSystem.Application.Features.Commands.Department
         {
             var result = await _service.CreateAsync(request, cancellationToken);
 
-            var @eventCreateDepartment = new SendEmailEvent()
+            var @event = new DepartmentCreated()
             {
                 Id = result,
                 Title = request.Name,
@@ -34,7 +34,7 @@ namespace ManagementSystem.Application.Features.Commands.Department
                 ModulesType = CommonLibrary.Models.Enums.ModulesType.Department
             };
 
-            await _mediator.Publish(eventCreateDepartment, cancellationToken);
+            await _mediator.Publish(@event, cancellationToken);
             return result;
         }
     }

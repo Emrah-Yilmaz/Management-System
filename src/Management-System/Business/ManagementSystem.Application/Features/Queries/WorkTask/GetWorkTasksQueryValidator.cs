@@ -9,7 +9,7 @@ namespace ManagementSystem.Application.Features.Queries.WorkTask
             RuleFor(p => p.Title).MaximumLength(200);
             RuleFor(p => p.Department).MaximumLength(200);
             RuleFor(p => p.AssignedUser).MaximumLength(200);
-            RuleFor(p => p.Status).MaximumLength(200);
+            RuleFor(p => p.Status).IsInEnum();
             RuleFor(p => p.CreatedBy).MaximumLength(200);
             RuleFor(p => p.ModifiedBy).MaximumLength(200);
         }

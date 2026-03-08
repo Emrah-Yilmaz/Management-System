@@ -4,7 +4,9 @@ using Bogus;
 using CommonLibrary.Extensions;
 using CommonLibrary.Features.Paginations;
 using CommonLibrary.Models.Args;
+using CommonLibrary.Templates.Mail;
 using ManagementSystem.Domain.Entities;
+using ManagementSystem.Domain.Events.UserEvents;
 using ManagementSystem.Domain.Models.Args.User;
 using ManagementSystem.Domain.Models.Dto;
 using ManagementSystem.Domain.Models.Enums;
@@ -18,6 +20,7 @@ using ManagementSystem.Domain.Persistence.WorkTask;
 using ManagementSystem.Domain.Services.Abstract.User;
 using ManagementSystem.Domain.TokenHandler;
 using ManagementSystem.Domain.Utilities;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -25,9 +28,7 @@ using Packages.Exceptions.Types;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System.Text.Json;
 using static ManagementSystem.Domain.Utilities.Shared;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ManagementSystem.Domain.Services.Concrete.User
 {
@@ -41,6 +42,8 @@ namespace ManagementSystem.Domain.Services.Concrete.User
         private readonly IAddressRepository _addressRepository;
         private readonly IWorkTaskRepository _workTaskRepository;
         private readonly IRoleRepository _roleRepository;
+        private readonly IMediator _mediator;
+        private readonly IDomainPrincipal _domainPrincipal;
 
         public UserService(IUserRepository userRepository,
             IConfiguration configuration,
@@ -49,7 +52,9 @@ namespace ManagementSystem.Domain.Services.Concrete.User
             IProjectRepository projectRepository,
             IAddressRepository addressRepository,
             IWorkTaskRepository workTaskRepository,
-            IRoleRepository roleRepository)
+            IRoleRepository roleRepository,
+            IMediator mediator,
+            IDomainPrincipal domainPrincipal)
         {
             _userRepository = userRepository;
             _configuration = configuration;
@@ -59,6 +64,8 @@ namespace ManagementSystem.Domain.Services.Concrete.User
             _addressRepository = addressRepository;
             _workTaskRepository = workTaskRepository;
             _roleRepository = roleRepository;
+            _mediator = mediator;
+            _domainPrincipal = domainPrincipal;
         }
 
         public async Task<bool> AddUserToDepartment(AddUserToDepartmentArgs args, CancellationToken cancellationToken = default)
@@ -131,16 +138,29 @@ namespace ManagementSystem.Domain.Services.Concrete.User
 
         public async Task<int> CreateAsync(CreateUserArgs args, CancellationToken cancellationToken = default)
         {
-            var entity = _mapper.Map<Domain.Entities.User>(args);
+            var entity = _mapper.Map<Entities.User>(args);
             var hashedPass = Encrypt.Encript(args.PasswordHash);
             entity.PasswordHash = hashedPass;
             entity.Status = StatusType.Pending.ToString();
             var result = await _userRepository.AddAsync(entity, cancellationToken);
 
-            //Todo
-            //RabbitMQ implementasyonu sonrasında Doğrulama maili gönderilecek
+            //var activationLink = $"https://yourdomain.com/activate?userId={result}&token={args.ActivationToken}";
 
-            return result;
+            var emailBody = string.Format(MailTemplate.ActivationEmail, args.Name, string.Empty);
+
+            var sendEmailEvent = new UserCreated
+            {
+                Id = result,
+                Title = "Kullanıcı Aktivasyonu",
+                CreatedOn = DateTime.Now,
+                CreatedBy = $"{_domainPrincipal.GetClaims().Name} {_domainPrincipal.GetClaims().LastName}",
+                Subject = "Hesap Aktivasyonu",
+                To = args.Email,
+                Body = emailBody,
+                ModulesType = CommonLibrary.Models.Enums.ModulesType.User
+            };
+
+            await _mediator.Publish(sendEmailEvent, cancellationToken); return result;
         }
 
         public async Task<bool> CreateUserAddressAsync(CreateAddressArgs args, CancellationToken cancellationToken = default)
@@ -255,42 +275,67 @@ namespace ManagementSystem.Domain.Services.Concrete.User
         public async Task<PagedViewModel<UserDto>> GetUsers(GetUserArgs args, CancellationToken cancellationToken = default)
         {
             Func<IQueryable<Entities.User>, IQueryable<Entities.User>>[] includes = Array.Empty<Func<IQueryable<Entities.User>, IQueryable<Entities.User>>>();
+            bool noTracking = true;
 
             switch (args.UserRequestType)
             {
                 case UserRequestType.Basic:
-                    var basicUsers = _userRepository.GetThenInclude(
-                        predicate: null,
-                        noTracking: false,
-                        includes: null);
-                    return await Map(basicUsers, args);
+                    // Basic isteklerde noTracking = false olarak belirlenmişti
+                    noTracking = false;
+                    includes = null;
+                    break;
 
                 case UserRequestType.Address:
                     includes = new Func<IQueryable<Entities.User>, IQueryable<Entities.User>>[]
                     {
-                        q => q.Include(u => u.Addresses), // User'dan Addresses'e geçiş
-                        q => q.Include(u => u.Addresses).ThenInclude(a => a.City),// Address'ten City'e geçiş
-                        q => q.Include(u => u.Addresses).ThenInclude(a => a.District), // Address'ten City'e geçiş
-                        q => q.Include(u => u.Addresses).ThenInclude(a => a.Quarter) // Address'ten City'e geçiş
+                q => q.Include(u => u.Addresses),
+                q => q.Include(u => u.Addresses).ThenInclude(a => a.City),
+                q => q.Include(u => u.Addresses).ThenInclude(a => a.District),
+                q => q.Include(u => u.Addresses).ThenInclude(a => a.Quarter)
                     };
                     break;
 
                 default:
                     includes = new Func<IQueryable<Entities.User>, IQueryable<Entities.User>>[]
                     {
-                        q => q.Include(u => u.Department).ThenInclude(d => d.Projects),
-                        q => q.Include(u => u.Addresses), // User'dan Addresses'e geçiş
-                        q => q.Include(u => u.Addresses).ThenInclude(a => a.City),// Address'ten City'e geçiş
-                        q => q.Include(u => u.Addresses).ThenInclude(a => a.District), // Address'ten City'e geçiş
-                        q => q.Include(u => u.Addresses).ThenInclude(a => a.Quarter) // Address'ten City'e geçiş
+                q => q.Include(u => u.Department).ThenInclude(d => d.Projects),
+                q => q.Include(u => u.Addresses),
+                q => q.Include(u => u.Addresses).ThenInclude(a => a.City),
+                q => q.Include(u => u.Addresses).ThenInclude(a => a.District),
+                q => q.Include(u => u.Addresses).ThenInclude(a => a.Quarter)
                     };
                     break;
             }
 
+            // Repository'den IQueryable al
             var users = _userRepository.GetThenInclude(
                 predicate: null,
-                noTracking: true,
+                noTracking: noTracking,
                 includes: includes);
+
+            // Filtreleri uygula (varsa). EF uyumlu olması için ToLower ile küçükharf-normalizasyonu yapıldı.
+            if (!string.IsNullOrWhiteSpace(args.Name))
+            {
+                var lower = args.Name.ToLower();
+                users = users.Where(u => u.Name != null && u.Name.ToLower().Contains(lower));
+            }
+
+            if (!string.IsNullOrWhiteSpace(args.UserName))
+            {
+                var lower = args.UserName.ToLower();
+                users = users.Where(u => u.UserName != null && u.UserName.ToLower().Contains(lower));
+            }
+
+            if (!string.IsNullOrWhiteSpace(args.Email))
+            {
+                var lower = args.Email.ToLower();
+                users = users.Where(u => u.Email != null && u.Email.ToLower().Contains(lower));
+            }
+
+            if (args.DepartmentId.HasValue)
+            {
+                users = users.Where(u => u.DepartmentId == args.DepartmentId.Value);
+            }
 
             return await Map(users, args);
         }
@@ -464,6 +509,45 @@ namespace ManagementSystem.Domain.Services.Concrete.User
             user.Roles.Add(role);
 
             return await _userRepository.UpdateAsync(user, cancellationToken) > 0 ; 
+        }
+
+        public async Task<List<UserDto>> GetUsersBasicAsync(CancellationToken cancellationToken = default)
+        {
+            var users = await _userRepository.GetAllAsync(noTracking: true, cancellationToken);
+            var result = _mapper.Map<List<UserDto>>(users);
+            return result;
+        }
+
+        public async Task<IList<UserDto>> SearchAsync(SearchUsersArgs args, CancellationToken cancellationToken = default)
+        {
+            // Only include search terms if they are not null or empty
+            var searchTerms = new List<(System.Linq.Expressions.Expression<Func<Domain.Entities.User, string>> property, string searchTerm)>();
+
+            if (!string.IsNullOrEmpty(args.Name))
+            {
+                searchTerms.Add((u => u.Name, args.Name));
+            }
+            if (!string.IsNullOrEmpty(args.UserName))
+            {
+                searchTerms.Add((u => u.UserName, args.UserName));
+            }
+
+            // DepartmentId is int?, but SearchAsync expects string properties.
+            // If you want to search by DepartmentId, you need a different overload or a different method.
+            // If you want to filter by DepartmentId, do it after the search.
+            var results = await _userRepository.SearchAsync(
+                cancellationToken,
+                searchTerms.ToArray()
+            );
+
+            // Now filter by DepartmentId if provided
+            if (args.DepartmentId.HasValue)
+            {
+                results = results.Where(u => u.DepartmentId == args.DepartmentId.Value).ToList();
+            }
+
+            // Map to UserDto and return
+            return _mapper.Map<IList<UserDto>>(results);
         }
     }
 }

@@ -102,5 +102,12 @@ namespace ManagementSystem.Domain.Services.Concrete.Department
             var result = await _repository.UpdateAsync(entity);
             return result;
         }
+
+        public async Task<List<DepartmentDto>> GetDepartmentsBasicAsync(CancellationToken cancellationToken = default)
+        {
+            var departments = await _repository.GetAllAsync(noTracking: true, cancellationToken);
+            var result = _mapper.Map<List<DepartmentDto>>(departments);
+            return result;
+        }
     }
 }

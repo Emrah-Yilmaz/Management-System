@@ -14,5 +14,8 @@ namespace ManagementSystem.Domain.Services.Abstract.Department
         public Task<DepartmentDto> GetProjectsByDepartment(GetByIdArgs args, CancellationToken cancellationToken = default);
         public Task<UsersByDepartmentDto> GetUsersByDepartment(GetByIdArgs args, CancellationToken cancellationToken = default);
         public Task<PagedViewModel<DepartmentDto>> GetDepartments(GetDepartmentsArgs args, CancellationToken cancellationToken = default);
+
+        // basic list
+        Task<List<DepartmentDto>> GetDepartmentsBasicAsync(CancellationToken cancellationToken = default);
     }
 }

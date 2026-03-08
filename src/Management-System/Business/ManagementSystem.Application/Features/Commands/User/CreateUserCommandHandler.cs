@@ -14,8 +14,7 @@ namespace ManagementSystem.Application.Features.Commands.User
 
         public async Task<int> Handle(CreateUserCommand request, CancellationToken cancellationToken)
         {
-            var result = await _userService.CreateAsync(request, cancellationToken);
-            return result;
+            return await _userService.CreateAsync(request, cancellationToken);
         }
     }
 }

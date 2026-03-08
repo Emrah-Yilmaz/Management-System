@@ -8,4 +8,6 @@ public interface IProjectService : IDomainService
     Task Create(CreateProjectArgs args, CancellationToken cancellationToken = default);
     Task<PagedViewModel<ProjectDto>> SearchAsync(SearchProjectArgs args, CancellationToken cancellationToken = default);
     Task<ProjectUsersDto?> GetProjectAsync(GetProjectArgs args, CancellationToken cancellationToken = default);
+    Task<List<ProjectDto>> GetProjectsBasicAsync(CancellationToken cancellationToken = default);
+
 }
