@@ -1,4 +1,4 @@
-﻿using ManagementSystem.Domain.Entities;
+using ManagementSystem.Domain.Entities;
 using ManagementSystem.Domain.Models.Enums;
 using ManagementSystem.Domain.TokenHandler;
 using Microsoft.EntityFrameworkCore;
@@ -37,6 +37,7 @@ namespace ManagementSystem.Infrastructure.Context
         public DbSet<District> Districts { get; set; }
         public DbSet<Quarter> Quarters { get; set; }
         public DbSet<StatusChangeLog> StatusChangeLogs { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

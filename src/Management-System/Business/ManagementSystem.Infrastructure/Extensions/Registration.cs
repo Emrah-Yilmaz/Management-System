@@ -1,9 +1,10 @@
-﻿using ManagementSystem.Domain.Persistence.City;
+using ManagementSystem.Domain.Persistence.City;
 using ManagementSystem.Domain.Persistence.Comment;
 using ManagementSystem.Domain.Persistence.Department;
 using ManagementSystem.Domain.Persistence.History;
 using ManagementSystem.Domain.Persistence.Location;
 using ManagementSystem.Domain.Persistence.NewFolder;
+using ManagementSystem.Domain.Persistence.Notification;
 using ManagementSystem.Domain.Persistence.User;
 using ManagementSystem.Domain.Persistence.WorkTask;
 using ManagementSystem.Domain.Ports;
@@ -15,6 +16,7 @@ using ManagementSystem.Infrastructure.Persistence.Comment;
 using ManagementSystem.Infrastructure.Persistence.Department;
 using ManagementSystem.Infrastructure.Persistence.History;
 using ManagementSystem.Infrastructure.Persistence.Location;
+using ManagementSystem.Infrastructure.Persistence.Notification;
 using ManagementSystem.Infrastructure.Persistence.Project;
 using ManagementSystem.Infrastructure.Persistence.Roles;
 using ManagementSystem.Infrastructure.Persistence.User;
@@ -54,6 +56,7 @@ namespace ManagementSystem.Infrastructure.Extensions
             services.AddScoped<IHistoryRepository, HistoryRepository>();
             services.AddScoped<IRoleRepository, RoleRepository>();
             services.AddScoped<IProjectRepository, ProjectRepository>();
+            services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>)); // TContext burada AppDbContext olacak
 
             return services;

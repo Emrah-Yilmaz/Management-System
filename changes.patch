@@ -1,0 +1,343 @@
+diff --git a/Business/ManagementSystem.Domain/Entities/User.cs b/Business/ManagementSystem.Domain/Entities/User.cs
+index e1ea678..bd93627 100644
+--- a/Business/ManagementSystem.Domain/Entities/User.cs
++++ b/Business/ManagementSystem.Domain/Entities/User.cs
+@@ -1,4 +1,4 @@
+-﻿using Packages.Repositories.EfCore.Entity;
++using Packages.Repositories.EfCore.Entity;
+ 
+ namespace ManagementSystem.Domain.Entities
+ {
+@@ -10,6 +10,7 @@ namespace ManagementSystem.Domain.Entities
+         public string Email { get; set; }
+         public string PasswordHash { get; set; }
+         public virtual ICollection<Comment>? Comments { get; set; }
++        public virtual ICollection<Notification>? Notifications { get; set; }
+         public virtual ICollection<UserRole>? UserRoles { get; set; }
+         public virtual ICollection<WorkTask>? WorkTasks { get; set; }
+         public ICollection<Project> Projects { get; set; } = new List<Project>();
+diff --git a/Business/ManagementSystem.Domain/Extensions/Registration.cs b/Business/ManagementSystem.Domain/Extensions/Registration.cs
+index b4d9be2..1eca092 100644
+--- a/Business/ManagementSystem.Domain/Extensions/Registration.cs
++++ b/Business/ManagementSystem.Domain/Extensions/Registration.cs
+@@ -1,15 +1,17 @@
+-﻿using ManagementSystem.Domain.Services.Abstract.Comment;
++using ManagementSystem.Domain.Services.Abstract.Comment;
+ using ManagementSystem.Domain.Services.Abstract.Department;
+ using ManagementSystem.Domain.Services.Abstract.History;
+ using ManagementSystem.Domain.Services.Abstract.Location;
+ using ManagementSystem.Domain.Services.Abstract.User;
+ using ManagementSystem.Domain.Services.Abstract.WorkTask;
++using ManagementSystem.Domain.Services.Abstract.Notification;
+ using ManagementSystem.Domain.Services.Concrete.Comment;
+ using ManagementSystem.Domain.Services.Concrete.Department;
+ using ManagementSystem.Domain.Services.Concrete.History;
+ using ManagementSystem.Domain.Services.Concrete.Location;
+ using ManagementSystem.Domain.Services.Concrete.User;
+ using ManagementSystem.Domain.Services.Concrete.WorkTask;
++using ManagementSystem.Domain.Services.Concrete.Notification;
+ using ManagementSystem.Domain.TokenHandler;
+ using Microsoft.Extensions.DependencyInjection;
+ 
+@@ -26,6 +28,7 @@ namespace ManagementSystem.Domain.Extensions
+             services.AddScoped<ICommentService, CommentService>();
+             services.AddScoped<ILocationService, LocationService>();
+             services.AddScoped<IHistoryService, HistoryService>();
++            services.AddScoped<INotificationService, NotificationService>();
+             return services;
+         }
+     }
+diff --git a/Business/ManagementSystem.Domain/Services/Concrete/WorkTask/WorkTaskService.cs b/Business/ManagementSystem.Domain/Services/Concrete/WorkTask/WorkTaskService.cs
+index 16f227d..44e67b5 100644
+--- a/Business/ManagementSystem.Domain/Services/Concrete/WorkTask/WorkTaskService.cs
++++ b/Business/ManagementSystem.Domain/Services/Concrete/WorkTask/WorkTaskService.cs
+@@ -1,7 +1,9 @@
+-﻿using AutoMapper;
++using AutoMapper;
+ using ManagementSystem.Domain.Models.Args.WorkTask;
+ using ManagementSystem.Domain.Models.Dto;
+ using ManagementSystem.Domain.Persistence.WorkTask;
++using ManagementSystem.Domain.Ports;
++using ManagementSystem.Domain.Services.Abstract.Notification;
+ using ManagementSystem.Domain.Services.Abstract.WorkTask;
+ using ManagementSystem.Domain.TokenHandler;
+ 
+@@ -12,11 +14,16 @@ namespace ManagementSystem.Domain.Services.Concrete.WorkTask
+         private readonly IWorkTaskRepository _workTaskRepository;
+         private readonly IMapper _mapper;
+         private readonly IDomainPrincipal _domainPrincipal;
+-        public WorkTaskService(IWorkTaskRepository workTaskRepository, IMapper mapper, IDomainPrincipal domainPrincipal)
++        private readonly INotificationService _notificationService;
++        private readonly IHubPublisher _hubPublisher;
++
++        public WorkTaskService(IWorkTaskRepository workTaskRepository, IMapper mapper, IDomainPrincipal domainPrincipal, INotificationService notificationService, IHubPublisher hubPublisher)
+         {
+             _workTaskRepository = workTaskRepository;
+             _mapper = mapper;
+             _domainPrincipal = domainPrincipal;
++            _notificationService = notificationService;
++            _hubPublisher = hubPublisher;
+         }
+ 
+         public async Task<int> CreateAsync(CreateWorkTaskArgs args, CancellationToken cancellationToken = default)
+@@ -27,6 +34,20 @@ namespace ManagementSystem.Domain.Services.Concrete.WorkTask
+ 
+             var result = await _workTaskRepository.AddAsync(mappedEntity);
+ 
++            // Trigger Notification
++            if (result > 0 && mappedEntity.AssignedUserId > 0)
++            {
++                var notifArgs = new Models.Args.Notification.CreateNotificationArgs
++                {
++                    UserId = mappedEntity.AssignedUserId,
++                    Title = "Yeni Görev Atandı",
++                    Message = $"'{mappedEntity.Title}' başlıklı görev size atandı.",
++                    Type = "TaskAssigned"
++                };
++                await _notificationService.CreateAsync(notifArgs, cancellationToken);
++                await _hubPublisher.SendNotificationAsync(mappedEntity.AssignedUserId, notifArgs.Title, notifArgs.Message);
++            }
++
+             return result;
+         }
+ 
+@@ -45,6 +66,20 @@ namespace ManagementSystem.Domain.Services.Concrete.WorkTask
+ 
+             var result = await _workTaskRepository.UpdateAsync(entity);
+ 
++            // Trigger Notification for Update if assigned user exists
++            if (result > 0 && entity.AssignedUserId > 0)
++            {
++                var notifArgs = new Models.Args.Notification.CreateNotificationArgs
++                {
++                    UserId = entity.AssignedUserId,
++                    Title = "Görev Güncellendi",
++                    Message = $"'{entity.Title}' başlıklı görevde bir güncelleme yapıldı.",
++                    Type = "TaskUpdated"
++                };
++                await _notificationService.CreateAsync(notifArgs, cancellationToken);
++                await _hubPublisher.SendNotificationAsync(entity.AssignedUserId, notifArgs.Title, notifArgs.Message);
++            }
++
+             return result;
+         }
+ 
+diff --git a/Business/ManagementSystem.Infrastructure/Context/AppDbContext.cs b/Business/ManagementSystem.Infrastructure/Context/AppDbContext.cs
+index 683a75e..cf22f99 100644
+--- a/Business/ManagementSystem.Infrastructure/Context/AppDbContext.cs
++++ b/Business/ManagementSystem.Infrastructure/Context/AppDbContext.cs
+@@ -1,4 +1,4 @@
+-﻿using ManagementSystem.Domain.Entities;
++using ManagementSystem.Domain.Entities;
+ using ManagementSystem.Domain.Models.Enums;
+ using ManagementSystem.Domain.TokenHandler;
+ using Microsoft.EntityFrameworkCore;
+@@ -38,6 +38,7 @@ namespace ManagementSystem.Infrastructure.Context
+         public DbSet<District> Districts { get; set; }
+         public DbSet<Quarter> Quarters { get; set; }
+         public DbSet<StatusChangeLog> StatusChangeLogs { get; set; }
++        public DbSet<Notification> Notifications { get; set; }
+ 
+ 
+         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+@@ -89,6 +90,12 @@ namespace ManagementSystem.Infrastructure.Context
+                 .HasForeignKey(u => u.DepartmentId)
+                 .OnDelete(DeleteBehavior.NoAction);
+ 
++            modelBuilder.Entity<Notification>()
++                .HasOne(n => n.User)
++                .WithMany(u => u.Notifications)
++                .HasForeignKey(n => n.UserId)
++                .OnDelete(DeleteBehavior.Cascade);
++
+             modelBuilder.Entity<WorkTask>()
+                 .HasMany(wt => wt.Comments)
+                 .WithOne(c => c.Task)
+diff --git a/Business/ManagementSystem.Infrastructure/Extensions/Registration.cs b/Business/ManagementSystem.Infrastructure/Extensions/Registration.cs
+index 39cb54b..4c6dc6c 100644
+--- a/Business/ManagementSystem.Infrastructure/Extensions/Registration.cs
++++ b/Business/ManagementSystem.Infrastructure/Extensions/Registration.cs
+@@ -1,10 +1,11 @@
+-﻿using ManagementSystem.Domain.Persistence.City;
++using ManagementSystem.Domain.Persistence.City;
+ using ManagementSystem.Domain.Persistence.Comment;
+ using ManagementSystem.Domain.Persistence.Department;
+ using ManagementSystem.Domain.Persistence.History;
+ using ManagementSystem.Domain.Persistence.Location;
+ using ManagementSystem.Domain.Persistence.User;
+ using ManagementSystem.Domain.Persistence.WorkTask;
++using ManagementSystem.Domain.Persistence.Notification;
+ using ManagementSystem.Domain.Ports;
+ using ManagementSystem.Infrastructure.Adapters;
+ using ManagementSystem.Infrastructure.Context;
+@@ -17,6 +18,7 @@ using ManagementSystem.Infrastructure.Persistence.Location;
+ using ManagementSystem.Infrastructure.Persistence.Project;
+ using ManagementSystem.Infrastructure.Persistence.User;
+ using ManagementSystem.Infrastructure.Persistence.WorkTask;
++using ManagementSystem.Infrastructure.Persistence.Notification;
+ using Microsoft.EntityFrameworkCore;
+ using Microsoft.Extensions.Configuration;
+ using Microsoft.Extensions.DependencyInjection;
+@@ -50,6 +52,7 @@ namespace ManagementSystem.Infrastructure.Extensions
+             services.AddScoped<IAddressRepository, AddressRepository>();
+             services.AddScoped<IProjectRepository, ProjectRepository>();
+             services.AddScoped<IHistoryRepository, HistoryRepository>();
++            services.AddScoped<INotificationRepository, NotificationRepository>();
+             services.AddScoped(typeof(IRepository<>), typeof(Repository<>)); // TContext burada AppDbContext olacak
+ 
+             return services;
+diff --git a/Business/ManagementSystem.Infrastructure/Migrations/AppDbContextModelSnapshot.cs b/Business/ManagementSystem.Infrastructure/Migrations/AppDbContextModelSnapshot.cs
+index a3b7521..ba795dd 100644
+--- a/Business/ManagementSystem.Infrastructure/Migrations/AppDbContextModelSnapshot.cs
++++ b/Business/ManagementSystem.Infrastructure/Migrations/AppDbContextModelSnapshot.cs
+@@ -271,6 +271,61 @@ namespace ManagementSystem.Infrastructure.Migrations
+                     b.ToTable("Districts");
+                 });
+ 
++            modelBuilder.Entity("ManagementSystem.Domain.Entities.Notification", b =>
++                {
++                    b.Property<int>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("int");
++
++                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
++
++                    b.Property<string>("CreatedBy")
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<int?>("CreatedById")
++                        .HasColumnType("int");
++
++                    b.Property<DateTime?>("CreatedOn")
++                        .HasColumnType("datetime2");
++
++                    b.Property<bool>("IsRead")
++                        .HasColumnType("bit");
++
++                    b.Property<string>("Message")
++                        .IsRequired()
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<string>("ModifiedBy")
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<int?>("ModifiedById")
++                        .HasColumnType("int");
++
++                    b.Property<DateTime?>("ModifiedOn")
++                        .HasColumnType("datetime2");
++
++                    b.Property<string>("Status")
++                        .IsRequired()
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<string>("Title")
++                        .IsRequired()
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<string>("Type")
++                        .IsRequired()
++                        .HasColumnType("nvarchar(max)");
++
++                    b.Property<int>("UserId")
++                        .HasColumnType("int");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("UserId");
++
++                    b.ToTable("Notifications");
++                });
++
+             modelBuilder.Entity("ManagementSystem.Domain.Entities.Project", b =>
+                 {
+                     b.Property<int>("Id")
+@@ -745,6 +800,17 @@ namespace ManagementSystem.Infrastructure.Migrations
+                     b.Navigation("City");
+                 });
+ 
++            modelBuilder.Entity("ManagementSystem.Domain.Entities.Notification", b =>
++                {
++                    b.HasOne("ManagementSystem.Domain.Entities.User", "User")
++                        .WithMany("Notifications")
++                        .HasForeignKey("UserId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.Navigation("User");
++                });
++
+             modelBuilder.Entity("ManagementSystem.Domain.Entities.Quarter", b =>
+                 {
+                     b.HasOne("ManagementSystem.Domain.Entities.District", "District")
+@@ -858,6 +924,8 @@ namespace ManagementSystem.Infrastructure.Migrations
+ 
+                     b.Navigation("Comments");
+ 
++                    b.Navigation("Notifications");
++
+                     b.Navigation("UserRoles");
+ 
+                     b.Navigation("WorkTasks");
+diff --git a/Services/ManagementSystem.WebApi/ManagementSystem.WebApi.csproj b/Services/ManagementSystem.WebApi/ManagementSystem.WebApi.csproj
+index 812b79c..e3f2875 100644
+--- a/Services/ManagementSystem.WebApi/ManagementSystem.WebApi.csproj
++++ b/Services/ManagementSystem.WebApi/ManagementSystem.WebApi.csproj
+@@ -20,6 +20,10 @@
+     <PackageReference Include="MediatR" Version="12.4.1" />
+     <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
+     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.10" />
++    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.3">
++      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
++      <PrivateAssets>all</PrivateAssets>
++    </PackageReference>
+     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
+ 	<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.10" />
+diff --git a/Services/ManagementSystem.WebApi/MappingProfile/History/HistoryMappingProfile.cs b/Services/ManagementSystem.WebApi/MappingProfile/History/HistoryMappingProfile.cs
+index 615c531..ff6984b 100644
+--- a/Services/ManagementSystem.WebApi/MappingProfile/History/HistoryMappingProfile.cs
++++ b/Services/ManagementSystem.WebApi/MappingProfile/History/HistoryMappingProfile.cs
+@@ -1,4 +1,4 @@
+-﻿using AutoMapper;
++using AutoMapper;
+ using ManagementSystem.Domain.Models.Dto;
+ using ManagementSystem.WebApi.Models.Response.History;
+ using System.Text.Json;
+@@ -11,7 +11,7 @@ namespace ManagementSystem.WebApi.MappingProfile.History
+         {
+             CreateMap<HistoryDto, LogResponse>()
+                        .ForMember(dest => dest.ChangedBy, opt =>
+-                           opt.MapFrom(src => Newtonsoft.Json.JsonConvert.DeserializeObject<ChangedByInfo>(src.ChangedBy)));
++                           opt.MapFrom(src => System.Text.Json.JsonSerializer.Deserialize<ChangedByInfo>(src.ChangedBy, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true })));
+ 
+             CreateMap<List<HistoryDto>, HistoryResponse>()
+                 .ConvertUsing<HistoryDtoListConverter>();
+diff --git a/Services/ManagementSystem.WebApi/Program.cs b/Services/ManagementSystem.WebApi/Program.cs
+index 955625a..6a2696f 100644
+--- a/Services/ManagementSystem.WebApi/Program.cs
++++ b/Services/ManagementSystem.WebApi/Program.cs
+@@ -5,6 +5,7 @@ using ManagementSystem.Domain.Extensions;
+ using ManagementSystem.Infrastructure.Extensions;
+ using ManagementSystem.WebApi.Configurations.Swagger;
+ using ManagementSystem.WebApi.Extensions;
++using ManagementSystem.WebApi.Hubs;
+ using MassTransit;
+ using Microsoft.AspNetCore.Authentication.JwtBearer;
+ using Microsoft.IdentityModel.Tokens;
+@@ -26,6 +27,8 @@ builder.Services.AddControllers()
+ 
+ builder.Services.Configure<LocationOptions>(builder.Configuration.GetSection("LocationOptions"));
+ 
++builder.Services.AddSignalR();
++builder.Services.AddScoped<ManagementSystem.Domain.Ports.IHubPublisher, ManagementSystem.WebApi.Hubs.HubPublisher>();
+ builder.Services.AddEndpointsApiExplorer();
+ builder.Services.AddApplicationRegistration();
+ builder.Services.AddWebApiRegistration();
+@@ -130,5 +133,6 @@ app.UseAuthorization();
+ app.UseCors("MyPolicy");
+ 
+ app.MapControllers();
++app.MapHub<NotificationHub>("/notification-hub");
+ 
+ app.Run();

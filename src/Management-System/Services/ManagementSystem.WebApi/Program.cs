@@ -11,6 +11,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Packages.Extensions;
 using System.Text;
+using ManagementSystem.WebApi.Hubs;
+using ManagementSystem.Domain.Ports;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +34,9 @@ builder.Services.AddWebApiRegistration();
 builder.Services.AddDomainRegistration();
 builder.Services.AddInfrastructureRegistration(builder.Configuration);
 builder.Services.AddStackExchangeRedisCache(opt => opt.Configuration = "localhost:6379");
+
+builder.Services.AddSignalR();
+builder.Services.AddScoped<IHubPublisher, HubPublisher>();
 
 var rabbitMqHost = builder.Configuration["RabbitMQ:Host"];
 var rabbitMqPort = builder.Configuration["RabbitMQ:Port"];
@@ -110,9 +115,10 @@ builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
 builder.Services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
 {
-    builder.AllowAnyOrigin()
+    builder.SetIsOriginAllowed(origin => true) // SignalR için AllowAnyOrigin yerine kullanılır
     .AllowAnyMethod()
-    .AllowAnyHeader();
+    .AllowAnyHeader()
+    .AllowCredentials();
 }));
 var app = builder.Build();
 
@@ -131,5 +137,6 @@ app.UseAuthorization();
 app.UseCors("MyPolicy");
 
 app.MapControllers();
+app.MapHub<NotificationHub>("/notification-hub");
 
 app.Run();

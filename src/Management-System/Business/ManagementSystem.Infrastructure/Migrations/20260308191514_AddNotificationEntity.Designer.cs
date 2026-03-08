@@ -4,6 +4,7 @@ using ManagementSystem.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,13 +12,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ManagementSystem.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260308191514_AddNotificationEntity")]
+    partial class AddNotificationEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.0")
+                .HasAnnotation("ProductVersion", "8.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -599,6 +602,51 @@ namespace ManagementSystem.Infrastructure.Migrations
                     b.ToTable("User");
                 });
 
+            modelBuilder.Entity("ManagementSystem.Domain.Entities.UserRole", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ModifiedById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ModifiedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserRole");
+                });
+
             modelBuilder.Entity("ManagementSystem.Domain.Entities.WorkTask", b =>
                 {
                     b.Property<int>("Id")
@@ -673,21 +721,6 @@ namespace ManagementSystem.Infrastructure.Migrations
                     b.HasIndex("UsersId");
 
                     b.ToTable("ProjectUser");
-                });
-
-            modelBuilder.Entity("RoleUser", b =>
-                {
-                    b.Property<int>("RolesId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UsersId")
-                        .HasColumnType("int");
-
-                    b.HasKey("RolesId", "UsersId");
-
-                    b.HasIndex("UsersId");
-
-                    b.ToTable("RoleUser");
                 });
 
             modelBuilder.Entity("DepartmentProject", b =>
@@ -802,6 +835,25 @@ namespace ManagementSystem.Infrastructure.Migrations
                     b.Navigation("Department");
                 });
 
+            modelBuilder.Entity("ManagementSystem.Domain.Entities.UserRole", b =>
+                {
+                    b.HasOne("ManagementSystem.Domain.Entities.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("ManagementSystem.Domain.Entities.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("ManagementSystem.Domain.Entities.WorkTask", b =>
                 {
                     b.HasOne("ManagementSystem.Domain.Entities.User", "AssignedUser")
@@ -844,21 +896,6 @@ namespace ManagementSystem.Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("RoleUser", b =>
-                {
-                    b.HasOne("ManagementSystem.Domain.Entities.Role", null)
-                        .WithMany()
-                        .HasForeignKey("RolesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ManagementSystem.Domain.Entities.User", null)
-                        .WithMany()
-                        .HasForeignKey("UsersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("ManagementSystem.Domain.Entities.City", b =>
                 {
                     b.Navigation("Districts");
@@ -879,6 +916,11 @@ namespace ManagementSystem.Infrastructure.Migrations
                     b.Navigation("WorkTasks");
                 });
 
+            modelBuilder.Entity("ManagementSystem.Domain.Entities.Role", b =>
+                {
+                    b.Navigation("UserRoles");
+                });
+
             modelBuilder.Entity("ManagementSystem.Domain.Entities.User", b =>
                 {
                     b.Navigation("Addresses");
@@ -886,6 +928,8 @@ namespace ManagementSystem.Infrastructure.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("Notifications");
+
+                    b.Navigation("UserRoles");
 
                     b.Navigation("WorkTasks");
                 });

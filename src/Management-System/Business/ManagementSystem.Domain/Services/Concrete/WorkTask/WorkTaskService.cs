@@ -1,9 +1,12 @@
-﻿using AutoMapper;
+using AutoMapper;
 using ManagementSystem.Domain.Models.Args.WorkTask;
 using ManagementSystem.Domain.Models.Dto;
 using ManagementSystem.Domain.Persistence.WorkTask;
+using ManagementSystem.Domain.Services.Abstract.Notification;
 using ManagementSystem.Domain.Services.Abstract.WorkTask;
 using ManagementSystem.Domain.TokenHandler;
+using ManagementSystem.Domain.Ports;
+using ManagementSystem.Domain.Models.Args.Notification;
 
 namespace ManagementSystem.Domain.Services.Concrete.WorkTask
 {
@@ -12,11 +15,21 @@ namespace ManagementSystem.Domain.Services.Concrete.WorkTask
         private readonly IWorkTaskRepository _workTaskRepository;
         private readonly IMapper _mapper;
         private readonly IDomainPrincipal _domainPrincipal;
-        public WorkTaskService(IWorkTaskRepository workTaskRepository, IMapper mapper, IDomainPrincipal domainPrincipal)
+        private readonly INotificationService _notificationService;
+        private readonly IHubPublisher _hubPublisher;
+        
+        public WorkTaskService(
+            IWorkTaskRepository workTaskRepository, 
+            IMapper mapper, 
+            IDomainPrincipal domainPrincipal,
+            INotificationService notificationService,
+            IHubPublisher hubPublisher)
         {
             _workTaskRepository = workTaskRepository;
             _mapper = mapper;
             _domainPrincipal = domainPrincipal;
+            _notificationService = notificationService;
+            _hubPublisher = hubPublisher;
         }
 
         public async Task<int> CreateAsync(CreateWorkTaskArgs args, CancellationToken cancellationToken = default)
@@ -26,6 +39,26 @@ namespace ManagementSystem.Domain.Services.Concrete.WorkTask
             mappedEntity.CreatedBy = string.Concat(_domainPrincipal.GetClaims().Name + " " + _domainPrincipal.GetClaims().LastName);
 
             var result = await _workTaskRepository.AddAsync(mappedEntity);
+
+            if (result > 0 && args.AssignedUserId > 0)
+            {
+                var notificationArgs = new CreateNotificationArgs
+                {
+                    UserId = args.AssignedUserId,
+                    Title = "Yeni Görev Atandı",
+                    Message = $"Size yeni bir görev atandı: '{args.Title}'.",
+                    Type = "Task"
+                };
+                
+                var notificationResult = await _notificationService.CreateAsync(notificationArgs);
+                if (notificationResult > 0)
+                {
+                    await _hubPublisher.SendNotificationAsync(
+                        args.AssignedUserId, 
+                        notificationArgs.Title, 
+                        notificationArgs.Message);
+                }
+            }
 
             return result;
         }
@@ -44,6 +77,26 @@ namespace ManagementSystem.Domain.Services.Concrete.WorkTask
             entity.ModifiedBy = string.Concat(_domainPrincipal.GetClaims().Name + " " + _domainPrincipal.GetClaims().LastName);
 
             var result = await _workTaskRepository.UpdateAsync(entity);
+
+            if (result > 0 && args.AssignedUserId.HasValue)
+            {
+                var notificationArgs = new CreateNotificationArgs
+                {
+                    UserId = args.AssignedUserId.Value,
+                    Title = "Görev Güncellendi",
+                    Message = $"Bağlı olduğunuz bir görev güncellendi: '{entity.Title}'.",
+                    Type = "Task"
+                };
+
+                var notificationResult = await _notificationService.CreateAsync(notificationArgs);
+                if (notificationResult > 0)
+                {
+                    await _hubPublisher.SendNotificationAsync(
+                        args.AssignedUserId.Value,
+                        notificationArgs.Title,
+                        notificationArgs.Message);
+                }
+            }
 
             return result;
         }
